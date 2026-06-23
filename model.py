@@ -337,6 +337,46 @@ def function_forward_backward_stubs():
     return Function
 
 # Step 15 - apply
+# What is happening under the hood ? 
+# Say, we write z = Add.apply(x, y)
+
+# Then, internally, ctx = Add(x, y) creates a Function Node object as shown below. 
+# x ----\
+#        Add(ctx)
+# y ----/
+
+# The constructor of Function Node records : 
+# ctx.parents = (x, y)
+# ctx.needs_input_grad = [...]
+# ctx.requires_grad = ...
+
+# Next, ctx.forward(x.lazydata, y.lazydata) runs the actual math on the LazyBuffers of x and y, producing a new buffer.
+# Then, out = Tensor(out_buf, requires_grad=ctx.requires_grad) creates the output tensor. 
+
+# Finally, out.__ctx = ctx creates the crucial graph link: 
+# x ----\
+#        Add(ctx) ---> out
+# y ----/
+
+# Notice something subtle : The Function does not attach inputs to outputs. 
+# Rather, the output Tensor stores a pointer to the Function that created it, 
+# while the Function stores pointers to its parent tensors. 
+# This can be summed up by the below diagram : 
+# out
+#  │
+#  ▼
+# ctx (Add)
+#  │
+#  ├── x
+#  └── y
+
+# So, the overall picture is : The autograd engine starts at out tensor, then follows out._ctx to reach the Function node. 
+# From the Function Node ctx, it follows ctx.parents to continue traversing backward through the graph. 
+# This is the core graph wiring that every autograd system uses.
+
+
+
+
 @classmethod
 def apply(cls, *tensors, **kwargs):
     # Step 1: Build the Function context
