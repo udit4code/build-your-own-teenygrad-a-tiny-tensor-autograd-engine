@@ -497,18 +497,8 @@ class Relu(Function):
 
     def backward(self, grad_output):
         zero = LazyBuffer.const(0, self.ret.shape)
-
-        mask = lazybuffer_binary_e(
-            zero,
-            BinaryOps.CMPLT,
-            self.ret
-        )
-
-        return lazybuffer_binary_e(
-            mask,
-            BinaryOps.MUL,
-            grad_output
-        )
+        mask = lazybuffer_binary_e(zero,BinaryOps.CMPLT,self.ret)
+        return lazybuffer_binary_e(mask,BinaryOps.MUL,grad_output)
 
 # Step 18 - Log (not yet solved)
 # TODO: implement
