@@ -134,7 +134,7 @@ def e(self, op):
     assert np.shares_memory(out, self._np) == False, f"For unary elementwise op {op}, we have output and self._np sharing same storage"
     return LazyBuffer(out)
     
-LazyBuffer.e = e
+# LazyBuffer.e = e
 
 # Step 8 - lazybuffer_binary_e
 def lazybuffer_binary_e(self, op, other):
@@ -445,13 +445,23 @@ class Neg(Function):
 # Step 17 - Relu
 class Relu(Function):
     def forward(self, x):
-        self.ret = x.e(UnaryOps.RELU)
+        self.ret = e(x, UnaryOps.RELU)
         return self.ret
 
     def backward(self, grad_output):
         zero = LazyBuffer.const(0, self.ret.shape)
-        mask = zero.e(BinaryOps.CMPLT, self.ret)
-        return mask.e(BinaryOps.MUL, grad_output)
+
+        mask = lazybuffer_binary_e(
+            zero,
+            BinaryOps.CMPLT,
+            self.ret
+        )
+
+        return lazybuffer_binary_e(
+            mask,
+            BinaryOps.MUL,
+            grad_output
+        )
 
 # Step 18 - Log (not yet solved)
 # TODO: implement
