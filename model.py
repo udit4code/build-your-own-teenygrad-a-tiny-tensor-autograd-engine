@@ -405,19 +405,35 @@ for _obj in list(globals().values()):
                 _k.apply = apply
 
 # Step 16 - Neg
-# Say, we have : Tensor x -> Function Node Neg -> Tensor y 
-# In Forward pass, Function Node Neg consume buffer of Tensor x as input and transforms it into a new buffer, LazyBuffer(-x._np)
-# Mathematically, this is y = f(x) = -x 
+# Say, we have:
+# Tensor x -> Function Node Neg -> Tensor y
 
-# Now, we know, dy/dx = -1. 
-# In backward pass, the direction is reversed as : 
-# Tensor x <- Function Node Neg <- Tensor y 
-# From Tensor y, grad_output (dL/dy) flows into Function Node Neg. 
-# Mathematically, dL/dx = dL/dy * dy/dx = dL/dy * (-1) = -dL/dy , 
-# where dL/dy is the grad_output Lazybuffer and the upstream output gradient. 
-# Here, dy/dx is the local gradient. 
-# Since, Function Node Neg knows that there is a parent Tensor x, 
-# so, it passes off the backward gradient dL/dx as a LazyBuffer(-grad_output._np)
+# During the forward pass, the Neg Function consumes the underlying
+# LazyBuffer of Tensor x and produces a new LazyBuffer: out_buf = LazyBuffer(-x._np)
+# This output buffer is then wrapped in Tensor y.
+# Mathematically: y = f(x) = -x
+
+# The local derivative of Neg is: dy/dx = -1
+
+# During the backward pass, traversal happens in the reverse direction:
+# Tensor x <- Function Node Neg <- Tensor y
+# The upstream gradient dL/dy arrives at Neg.backward(...) as the LazyBuffer grad_output.
+
+# By the chain rule:
+#     dL/dx = dL/dy * dy/dx
+#           = dL/dy * (-1)
+#           = -dL/dy
+
+# Here:
+#     dL/dy  -> upstream gradient (grad_output)
+#     dy/dx  -> local gradient of Neg
+#     dL/dx  -> gradient to send to the parent Tensor x
+
+# Since Neg has exactly one parent Tensor x, it returns LazyBuffer(-grad_output._np)
+# which numerically represents dL/dx.
+#
+# The autograd engine will later take this returned gradient
+# and accumulate it into Tensor x.grad.
 
 class Neg(Function):
     def forward(self, x):
