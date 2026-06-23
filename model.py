@@ -134,7 +134,7 @@ def e(self, op):
     assert np.shares_memory(out, self._np) == False, f"For unary elementwise op {op}, we have output and self._np sharing same storage"
     return LazyBuffer(out)
     
-# LazyBuffer.e = e
+LazyBuffer.e = e
 
 # Step 8 - lazybuffer_binary_e
 def lazybuffer_binary_e(self, op, other):
