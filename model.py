@@ -554,8 +554,17 @@ class Log(Function):
         # Guiding principle : Save the smallest piece of information needed to compute the local derivative later.
         return lazybuffer_binary_e(grad_output,BinaryOps.DIV, self.x)
 
-# Step 19 - Exp (not yet solved)
-# TODO: implement
+# Step 19 - Exp
+class Exp(Function):
+    def forward(self, x):
+        # e^x is also the local derivative,
+        # So, cache the output instead of the input.
+        self.ret = e(x, UnaryOps.EXP)
+        return self.ret
+
+    # Math behind : dy/dx = d/dx(exp(x)) = exp(x) and dL/dx = dL/dy * dy/dx = dL/dy * exp(x)
+    def backward(self, grad_output):
+        return lazybuffer_binary_e(self.ret,BinaryOps.MUL,grad_output)
 
 # Step 20 - Sqrt (not yet solved)
 # TODO: implement
