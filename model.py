@@ -609,6 +609,47 @@ class Exp(Function):
         return lazybuffer_binary_e(self.ret,BinaryOps.MUL,grad_output)
 
 # Step 20 - Sqrt
+# Say, we have:
+# Tensor x -> Function Node Sqrt -> Tensor y
+#
+# During the forward pass, the Sqrt Function consumes the
+# underlying LazyBuffer of Tensor x and produces: y = sqrt(x)
+#
+# Example:
+#     x = [1, 4, 9, 16]
+#     y = [1, 2, 3, 4]
+# Why do we store self.ret ?
+# The derivative of sqrt(x) is: d(sqrt(x))/dx = 1/(2*sqrt(x))
+
+# Since the forward output already equals sqrt(x), self.ret = sqrt(x)
+# we can reuse it during backward and avoid computing
+# another square-root operation.
+
+# Local derivative of Sqrt :
+# For y = sqrt(x),
+# the derivative is:dy/dx = 1/(2*sqrt(x))
+# Since y = sqrt(x), we can rewrite this as dy/dx = 1/(2*y)
+
+
+# Backward pass
+# During backpropagation:
+# Tensor x <- Function Node Sqrt <- Tensor y
+#
+# The upstream gradient dL/dy arrives as grad_output.
+# By the chain rule: dL/dx = dL/dy * dy/dx = grad_output * 1/(2*sqrt(x)) = grad_output / (2*self.ret)
+#
+# Example:
+#     self.ret    = [1, 2, 3, 4]
+#     grad_output = [1, 1, 1, 1]
+#     grad_input  = [1/2, 1/4, 1/6, 1/8]
+#
+# Thus the gradient is the incoming gradient divided
+# elementwise by twice the forward output.
+#
+# The returned LazyBuffer numerically represents dL/dx,
+# which the autograd engine will later accumulate into
+# the parent Tensor's .grad field.
+
 class Sqrt(Function):
     def forward(self, x):
         # Step 1 : Cache sqrt(x) since backward needs 1/(2*sqrt(x))
