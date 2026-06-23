@@ -262,6 +262,18 @@ def permute(self, order):
 # The Tensor stores the value; the Function stores the operation and gradient-routing logic. 
 # Together they form the autograd graph.
 
+# We are designing, based on the following abstraction. 
+# The Tensor is the high-level autograd object, while LazyBuffer is the low-level storage object that actually owns the numerical data. 
+# Tensor
+# ├── lazydata (LazyBuffer)
+# ├── grad
+# ├── requires_grad
+# ├── _ctx (Function that created it)
+# └── autograd metadata
+
+# The Tensor is what users interact with (x + y, x.relu(), x.backward()), but the actual values live inside the LazyBuffer (typically as LazyBuffer._np). 
+# During a forward pass, Function.forward() operates on the input tensors' LazyBuffers and produces a new LazyBuffer; then a new Tensor wraps that buffer and records the Function context for backprop. 
+# So we can think of Tensor = autograd wrapper, LazyBuffer = numerical storage/backend.
 class Function:
     def __init__(self, *tensors):
         # Each element unpacked by tensors is an object of instance Tensor. 
@@ -294,8 +306,35 @@ class Function:
         # Obvious scenario : if output tensor z of Add Node doesn't need gradient, then, is there any point in remembering its parents? 
         # No, and hence, in this way, we minimise memory by cutting down unnecessary book-keeping of gradients.
 
-# Step 14 - function_forward_backward_stubs (not yet solved)
-# TODO: implement
+# Step 14 - function_forward_backward_stubs
+# We are designing, based on the following abstraction. 
+# The Tensor is the high-level autograd object, while LazyBuffer is the low-level storage object that actually owns the numerical data. 
+# Tensor
+# ├── lazydata (LazyBuffer)
+# ├── grad
+# ├── requires_grad
+# ├── _ctx (Function that created it)
+# └── autograd metadata
+
+# The Tensor is what users interact with (x + y, x.relu(), x.backward()), but the actual values live inside the LazyBuffer (typically as LazyBuffer._np). 
+# During a forward pass, Function.forward() operates on the input tensors' LazyBuffers and produces a new LazyBuffer; then a new Tensor wraps that buffer and records the Function context for backprop. 
+# So we can think of Tensor = autograd wrapper, LazyBuffer = numerical storage/backend.
+
+def function_forward_backward_stubs():
+    def forward(self, *args, **kwargs):
+        raise NotImplementedError(
+            f"forward not implemented for {type(self).__name__}"
+        )
+
+    def backward(self, *args, **kwargs):
+        raise NotImplementedError(
+            f"backward not implemented for {type(self).__name__}"
+        )
+
+    Function.forward = forward
+    Function.backward = backward
+
+    return Function
 
 # Step 15 - apply (not yet solved)
 # TODO: implement
