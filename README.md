@@ -26,7 +26,7 @@ python scaffold.py
 - [x] **14.** function_forward_backward_stubs
 - [x] **15.** apply
 - [x] **16.** Neg
-- [ ] **17.** Relu
+- [x] **17.** Relu
 - [ ] **18.** Log
 - [ ] **19.** Exp
 - [ ] **20.** Sqrt

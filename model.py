@@ -23,32 +23,32 @@ def argsort(values):
 
 # Step 3 - make_op_enums
 from enum import Enum, auto
+class UnaryOps(Enum):
+    NEG = auto()
+    RELU = auto()
+    LOG = auto()
+    EXP = auto()
+    SQRT = auto()
+    SIGMOID = auto()
 
+class BinaryOps(Enum):
+    ADD = auto()
+    SUB = auto()
+    MUL = auto()
+    DIV = auto()
+    CMPLT = auto()
+    MAX = auto()
+
+class ReduceOps(Enum):
+    SUM = auto()
+    MAX = auto()
+
+class MovementOps(Enum):
+    RESHAPE = auto()
+    EXPAND = auto()
+    PERMUTE = auto()
+    
 def make_op_enums():
-    class UnaryOps(Enum):
-        NEG = auto()
-        RELU = auto()
-        LOG = auto()
-        EXP = auto()
-        SQRT = auto()
-        SIGMOID = auto()
-
-    class BinaryOps(Enum):
-        ADD = auto()
-        SUB = auto()
-        MUL = auto()
-        DIV = auto()
-        CMPLT = auto()
-        MAX = auto()
-
-    class ReduceOps(Enum):
-        SUM = auto()
-        MAX = auto()
-
-    class MovementOps(Enum):
-        RESHAPE = auto()
-        EXPAND = auto()
-        PERMUTE = auto()
     return UnaryOps, BinaryOps, ReduceOps, MovementOps
 
 # Step 4 - LazyBuffer
@@ -442,8 +442,16 @@ class Neg(Function):
     def backward(self, grad_output):
         return LazyBuffer(-grad_output._np)
 
-# Step 17 - Relu (not yet solved)
-# TODO: implement
+# Step 17 - Relu
+class Relu(Function):
+    def forward(self, x):
+        self.ret = x.e(UnaryOps.RELU)
+        return self.ret
+
+    def backward(self, grad_output):
+        zero = LazyBuffer.const(0, self.ret.shape)
+        mask = zero.e(BinaryOps.CMPLT, self.ret)
+        return mask.e(BinaryOps.MUL, grad_output)
 
 # Step 18 - Log (not yet solved)
 # TODO: implement
