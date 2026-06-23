@@ -487,8 +487,7 @@ class Neg(Function):
 #                = [0, 0, 0, 1, 1]
 # Thus gradients only flow through the neurons that were active during the forward pass.
 
-# The returned LazyBuffer numerically represents dL/dx, which the autograd engine will later accumulate into
-# the parent Tensor's .grad field.
+# The returned LazyBuffer numerically represents dL/dx, which the autograd engine will later accumulate into the parent Tensor's .grad field.
 
 class Relu(Function):
     def forward(self, x):
