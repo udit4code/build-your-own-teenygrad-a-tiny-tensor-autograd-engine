@@ -664,6 +664,53 @@ class Sqrt(Function):
         return lazybuffer_binary_e(grad_output,BinaryOps.DIV,denom)
 
 # Step 21 - Sigmoid
+# Say, we have: Tensor x -> Function Node Sigmoid -> Tensor y
+# During the forward pass, the Sigmoid Function consumes
+# the underlying LazyBuffer of Tensor x and produces: y = sigmoid(x)
+# where y = 1 / (1 + exp(-x)). 
+# Example:
+#     x = [-2, 0, 2]
+#     y ≈ [0.119, 0.5, 0.881]
+#
+# Every element is independently squashed into the range
+# (0, 1), which makes sigmoid useful for probabilities
+# and binary classification outputs.
+
+# Why do we store self.ret ?
+
+
+# The derivative of sigmoid can be written entirely in
+# terms of the sigmoid output: d(sigmoid(x))/dx = sigmoid(x) * (1 - sigmoid(x))
+#
+# Therefore, once the forward output has been computed,
+# we already have everything needed for backward.
+# We cache: self.ret = sigmoid(x)
+# and reuse it during gradient propagation.
+#
+# Local derivative of Sigmoid
+# Let: y = sigmoid(x)
+# Then: dy/dx = y * (1 - y)
+
+# This is one of the most important identities in
+# neural networks because it avoids recomputing the
+# exponential during backpropagation.
+
+# Backward pass : During backpropagation:
+# Tensor x <- Function Node Sigmoid <- Tensor y
+# The upstream gradient dL/dy arrives as grad_output.
+# By the chain rule: dL/dx = dL/dy * dy/dx = grad_output * sigmoid(x) * (1 - sigmoid(x))
+# Using the cached output: dL/dx = grad_output * self.ret * (1 - self.ret)
+# Example:
+#     self.ret    = [0.2, 0.5, 0.8]
+#     grad_output = [1, 1, 1]
+#     local_grad  = [0.16, 0.25, 0.16]
+#
+# So, grad_input  = [0.16, 0.25, 0.16]
+# Thus the gradient is the incoming gradient multiplied elementwise by y(1-y).
+# The returned LazyBuffer numerically represents dL/dx,
+# which the autograd engine will later accumulate into
+# the parent Tensor's .grad field. 
+
 class Sigmoid(Function):
     def forward(self, x):
         self.ret = e(x, UnaryOps.SIGMOID)
