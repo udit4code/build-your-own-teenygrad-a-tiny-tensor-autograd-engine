@@ -30,7 +30,7 @@ python scaffold.py
 - [x] **18.** Log
 - [x] **19.** Exp
 - [x] **20.** Sqrt
-- [ ] **21.** Sigmoid
+- [x] **21.** Sigmoid
 - [ ] **22.** Add
 - [ ] **23.** Sub
 - [ ] **24.** Mul

@@ -663,8 +663,21 @@ class Sqrt(Function):
         # Step 2 : grad_output / (2 * sqrt(x))
         return lazybuffer_binary_e(grad_output,BinaryOps.DIV,denom)
 
-# Step 21 - Sigmoid (not yet solved)
-# TODO: implement
+# Step 21 - Sigmoid
+class Sigmoid(Function):
+    def forward(self, x):
+        self.ret = e(x, UnaryOps.SIGMOID)
+        return self.ret
+
+    def backward(self, grad_output):
+        # Step 1 : Create a buffer for constant 1
+        one = LazyBuffer.const(1.0,self.ret.shape)
+        # Step 2 : Create a buffer for (1 - y)
+        one_minus_y = lazybuffer_binary_e(one,BinaryOps.SUB,self.ret)
+        # Step 3 : Create a buffer for the local gradient = y * (1 - y)
+        local_grad = lazybuffer_binary_e(self.ret, BinaryOps.MUL, one_minus_y)
+        # Step 4 : Return grad_output * [y * (1 - y)]
+        return lazybuffer_binary_e(grad_output, BinaryOps.MUL,local_grad)
 
 # Step 22 - Add (not yet solved)
 # TODO: implement
