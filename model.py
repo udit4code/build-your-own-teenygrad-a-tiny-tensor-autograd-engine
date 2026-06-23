@@ -608,8 +608,19 @@ class Exp(Function):
     def backward(self, grad_output):
         return lazybuffer_binary_e(self.ret,BinaryOps.MUL,grad_output)
 
-# Step 20 - Sqrt (not yet solved)
-# TODO: implement
+# Step 20 - Sqrt
+class Sqrt(Function):
+    def forward(self, x):
+        # Step 1 : Cache sqrt(x) since backward needs 1/(2*sqrt(x))
+        self.ret = e(x, UnaryOps.SQRT)
+        return self.ret
+
+    def backward(self, grad_output):
+        # Step 1 : Build 2 * sqrt(x)
+        two = LazyBuffer.const(2, self.ret.shape)
+        denom = lazybuffer_binary_e(two,BinaryOps.MUL,self.ret)
+        # Step 2 : grad_output / (2 * sqrt(x))
+        return lazybuffer_binary_e(grad_output,BinaryOps.DIV,denom)
 
 # Step 21 - Sigmoid (not yet solved)
 # TODO: implement

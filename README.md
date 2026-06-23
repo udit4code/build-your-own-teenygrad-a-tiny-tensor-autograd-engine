@@ -29,7 +29,7 @@ python scaffold.py
 - [x] **17.** Relu
 - [x] **18.** Log
 - [x] **19.** Exp
-- [ ] **20.** Sqrt
+- [x] **20.** Sqrt
 - [ ] **21.** Sigmoid
 - [ ] **22.** Add
 - [ ] **23.** Sub
