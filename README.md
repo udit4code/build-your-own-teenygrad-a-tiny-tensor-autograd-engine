@@ -27,7 +27,7 @@ python scaffold.py
 - [x] **15.** apply
 - [x] **16.** Neg
 - [x] **17.** Relu
-- [ ] **18.** Log
+- [x] **18.** Log
 - [ ] **19.** Exp
 - [ ] **20.** Sqrt
 - [ ] **21.** Sigmoid

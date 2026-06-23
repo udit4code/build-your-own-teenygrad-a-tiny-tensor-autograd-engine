@@ -500,8 +500,17 @@ class Relu(Function):
         mask = lazybuffer_binary_e(zero,BinaryOps.CMPLT,self.ret)
         return lazybuffer_binary_e(mask,BinaryOps.MUL,grad_output)
 
-# Step 18 - Log (not yet solved)
-# TODO: implement
+# Step 18 - Log
+class Log(Function):
+    def forward(self, x):
+        # Step 1 : Save original input because d(log(x))/dx = 1/x
+        self.x = x
+        # Step 2 : Compute ln(x)
+        return e(x, UnaryOps.LOG)
+
+    def backward(self, grad_output):
+        # dL/dx = dL/dy * dy/dx = grad_output * (1/x) = grad_output / x
+        return lazybuffer_binary_e(grad_output,BinaryOps.DIV,self.x)
 
 # Step 19 - Exp (not yet solved)
 # TODO: implement
