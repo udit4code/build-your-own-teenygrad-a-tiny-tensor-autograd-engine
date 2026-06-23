@@ -274,6 +274,8 @@ def permute(self, order):
 # The Tensor is what users interact with (x + y, x.relu(), x.backward()), but the actual values live inside the LazyBuffer (typically as LazyBuffer._np). 
 # During a forward pass, Function.forward() operates on the input tensors' LazyBuffers and produces a new LazyBuffer; then a new Tensor wraps that buffer and records the Function context for backprop. 
 # So we can think of Tensor = autograd wrapper, LazyBuffer = numerical storage/backend.
+
+
 class Function:
     def __init__(self, *tensors):
         # Each element unpacked by tensors is an object of instance Tensor. 
