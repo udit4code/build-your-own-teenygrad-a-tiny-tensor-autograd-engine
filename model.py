@@ -492,6 +492,7 @@ class Neg(Function):
 
 class Relu(Function):
     def forward(self, x):
+        # Why did we cache self.ret ? Because we would need it in computing the mask for dL/dx. 
         self.ret = e(x, UnaryOps.RELU)
         return self.ret
 
