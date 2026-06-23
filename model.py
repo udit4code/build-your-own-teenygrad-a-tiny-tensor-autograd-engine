@@ -727,6 +727,63 @@ class Sigmoid(Function):
         return lazybuffer_binary_e(grad_output, BinaryOps.MUL,local_grad)
 
 # Step 22 - Add
+# Say, we have:
+#
+#     x ----\
+#            Add ----> z
+#     y ----/
+# During the forward pass: z = x + y
+# The Add Function performs elementwise addition of the two input LazyBuffers.
+#
+# Example:
+#
+#     x = [1, 2, 3]
+#     y = [4, 5, 6]
+#     z = [5, 7, 9]
+#
+# Local derivatives of Add
+# For:
+#     z = x + y
+# we have:
+#     dz/dx = 1
+#     dz/dy = 1
+# Therefore the Add operation does not scale or modify
+# gradients during backpropagation.
+
+# Backward pass :
+# During backpropagation:
+#     x ----\
+#            Add <---- z
+#     y ----/
+
+# The upstream gradient dL/dz arrives as grad_output.
+# By the chain rule:
+#     dL/dx = dL/dz * dz/dx = grad_output * 1 = grad_output
+#     dL/dy = dL/dz * dz/dy = grad_output * 1 = grad_output
+#
+# Thus the same upstream gradient is routed unchanged to both parent tensors.
+# Example:
+#     grad_output = [10, 20, 30]
+#     grad_x = [10, 20, 30]
+#     grad_y = [10, 20, 30]
+
+
+# requires_grad handling :
+# Not every input necessarily requires gradients.
+# self.needs_input_grad stores a boolean flag for each
+# forward input:
+#     [needs_grad_x, needs_grad_y]
+# If an input does not require gradients, backward
+# returns None in that position.
+#
+# Example:
+#     self.needs_input_grad = [True, False]
+#     backward(...) returns:
+#         (grad_output, None)
+#
+# This avoids unnecessary gradient accumulation and
+# reduces autograd bookkeeping.
+
 class Add(Function):
     def forward(self, x, y):
         return lazybuffer_binary_e(x,BinaryOps.ADD,y)
