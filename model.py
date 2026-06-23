@@ -501,16 +501,58 @@ class Relu(Function):
         return lazybuffer_binary_e(mask,BinaryOps.MUL,grad_output)
 
 # Step 18 - Log
+# Say, we have: Tensor x -> Function Node Log -> Tensor y
+# During the forward pass, the Log Function consumes the
+# underlying LazyBuffer of Tensor x and produces: y = log(x)
+# Example: x = [1, e, e²] and y = [0, 1, 2]
+#
+# Why do we store self.x ?
+# The derivative of log depends on the original input: d(log(x))/dx = 1/x
+# Therefore, during backward propagation, we must still have access to the original x values.
+#
+# We cache: self.x = x during the forward pass.
+
+# Local derivative of Log : For: y = log(x)
+# the derivative is: dy/dx = 1/x
+# This derivative is computed elementwise.
+#
+# Backward pass : During backpropagation:
+# Tensor x <- Function Node Log <- Tensor y
+#
+# The upstream gradient dL/dy arrives as grad_output.
+# By the chain rule: dL/dx = dL/dy * dy/dx = grad_output * (1/x) = grad_output / x. For example : 
+# x           = [1, e, e²]
+# grad_output = [1, 1, 1]
+# grad_input  = [1, 1/e, 1/e²]
+#
+# The returned LazyBuffer numerically represents dL/dx, 
+# which the autograd engine will later accumulate into
+# the parent Tensor's .grad field.
+
 class Log(Function):
     def forward(self, x):
         # Step 1 : Save original input because d(log(x))/dx = 1/x
+        # Doubt : Why save x on self.x, when an object of Function class (i.e self) knows about its parent Tensor? 
+        # This is because self.backward(...) method doesn't receive parent Tensors. It only receives LazyBuffers
         self.x = x
         # Step 2 : Compute ln(x)
-        return e(x, UnaryOps.LOG)
+        return e(x, UnaryOps.LOG) 
 
+    # Guided by the math : dL/dx = dL/dy * dy/dx = grad_output * (1/x) = grad_output / x
     def backward(self, grad_output):
-        # dL/dx = dL/dy * dy/dx = grad_output * (1/x) = grad_output / x
-        return lazybuffer_binary_e(grad_output,BinaryOps.DIV,self.x)
+        # Please note that the contract of self.backward(...) is LazyBuffer -> LazyBuffer, not Tensor -> Tensor. 
+        # So, inside self.backward(...), we need access to the numerical values required for the derivative. 
+        # Hence, we need to cache/save the original input values, which turns out to be x.
+        # Instead of doing caching for x, we could still fetch it from the parent Tensor, as Function class has reference to it. 
+        # We can do something like x = self.parents[0].lazydata to get the original LazyBuffer. 
+        # But, despite that, we still cache x on self.x. Why ? 
+        # Because, backward should be self-contained and independent of Tensor internals. 
+        # Saving exactly what the derivative needs is simpler and faster. 
+        # Not every backward formula needs the entire input tensor. 
+        # For example : Log needs x, while exp(x) only needs exp(x). 
+        # So, for exp(x), we need to save self.ret instead of self.x , while for Log, we need to save self.x 
+        # Guiding principle : Save the smallest piece of information needed to compute the local derivative later.
+        return lazybuffer_binary_e(grad_output,BinaryOps.DIV, self.x)
 
 # Step 19 - Exp (not yet solved)
 # TODO: implement
