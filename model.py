@@ -309,29 +309,27 @@ class Function:
         # No, and hence, in this way, we minimise memory by cutting down unnecessary book-keeping of gradients.
 
 # Step 14 - function_forward_backward_stubs
-# We are designing, based on the following abstraction. 
-# The Tensor is the high-level autograd object, while LazyBuffer is the low-level storage object that actually owns the numerical data. 
-# Tensor
-# ├── lazydata (LazyBuffer)
-# ├── grad
-# ├── requires_grad
-# ├── _ctx (Function that created it)
-# └── autograd metadata
+# Right now, Function is acting like an abstract base class : 
+# Function
+# ├── Add
+# ├── Mul
+# ├── Relu
+# ├── Log
+# └── ...
 
-# The Tensor is what users interact with (x + y, x.relu(), x.backward()), but the actual values live inside the LazyBuffer (typically as LazyBuffer._np). 
-# During a forward pass, Function.forward() operates on the input tensors' LazyBuffers and produces a new LazyBuffer; then a new Tensor wraps that buffer and records the Function context for backprop. 
-# So we can think of Tensor = autograd wrapper, LazyBuffer = numerical storage/backend.
+# Every subclass must provide forward(...) and backward(...)
+# Why 
 
 def function_forward_backward_stubs():
     def forward(self, *args, **kwargs):
-        raise NotImplementedError(
-            f"forward not implemented for {type(self).__name__}"
-        )
+        # Why did we make it type(self).__name__ ? 
+        # Because, when Add(Function) class calls Add().forward(...) , 
+        # then, in that case, the inherited stub executes, and type(self).__name__ evaluates to "Add" 
+        # This helps in better debugging.
+        raise NotImplementedError(f"forward not implemented for {type(self).__name__}")
 
     def backward(self, *args, **kwargs):
-        raise NotImplementedError(
-            f"backward not implemented for {type(self).__name__}"
-        )
+        raise NotImplementedError(f"backward not implemented for {type(self).__name__}")
 
     Function.forward = forward
     Function.backward = backward
