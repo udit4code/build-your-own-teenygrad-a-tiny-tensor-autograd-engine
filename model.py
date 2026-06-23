@@ -555,6 +555,48 @@ class Log(Function):
         return lazybuffer_binary_e(grad_output,BinaryOps.DIV, self.x)
 
 # Step 19 - Exp
+# Say, we have: Tensor x -> Function Node Exp -> Tensor y
+# During the forward pass, the Exp Function consumes the
+# underlying LazyBuffer of Tensor x and produces: y = exp(x)
+# Example:
+#     x = [0, 1, 2]
+#     y = [1, e, e²]
+#
+# Every element of x is transformed independently.
+# Why do we store self.ret ?
+# The derivative of exp(x) is special: d(exp(x))/dx = exp(x)
+# The derivative is exactly the same as the forward output.
+# Therefore, instead of saving the original input x and
+# recomputing exp(x) during backward, we simply cache the
+# forward result: self.ret = exp(x)
+#
+# This is both simpler and cheaper.
+
+# Local derivative of Exp : 
+# For y = exp(x), the derivative is dy/dx = exp(x)
+# Since y = exp(x), we can also write dy/dx = y
+# This is why the cached output is sufficient.
+#
+# Backward pass :
+# During backpropagation:
+# Tensor x <- Function Node Exp <- Tensor y
+#
+# The upstream gradient dL/dy arrives as grad_output.
+# By the chain rule: dL/dx = dL/dy * dy/dx = grad_output * exp(x)
+# Using the cached output: dL/dx = grad_output * self.ret
+# Example:
+#     x            = [0, 1, 2]
+#     self.ret     = [1, e, e²]
+#     grad_output  = [10, 10, 10]
+#
+#     grad_input   = [10, 10e, 10e²]
+#
+# Thus the gradient is simply the incoming gradient multiplied elementwise by the forward output.
+# The returned LazyBuffer numerically represents dL/dx, which the autograd engine will later accumulate into the parent Tensor's .grad field.
+#
+class Exp(Function):
+    ...
+
 class Exp(Function):
     def forward(self, x):
         # e^x is also the local derivative,
