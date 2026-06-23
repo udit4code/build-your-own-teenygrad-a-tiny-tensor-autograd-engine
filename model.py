@@ -404,8 +404,27 @@ for _obj in list(globals().values()):
             if _k.__name__ == 'Function':
                 _k.apply = apply
 
-# Step 16 - Neg (not yet solved)
-# TODO: implement
+# Step 16 - Neg
+# Say, we have : Tensor x -> Function Node Neg -> Tensor y 
+# In Forward pass, Function Node Neg consume buffer of Tensor x as input and transforms it into a new buffer, LazyBuffer(-x._np)
+# Mathematically, this is y = f(x) = -x 
+
+# Now, we know, dy/dx = -1. 
+# In backward pass, the direction is reversed as : 
+# Tensor x <- Function Node Neg <- Tensor y 
+# From Tensor y, grad_output (dL/dy) flows into Function Node Neg. 
+# Mathematically, dL/dx = dL/dy * dy/dx = dL/dy * (-1) = -dL/dy , 
+# where dL/dy is the grad_output Lazybuffer and the upstream output gradient. 
+# Here, dy/dx is the local gradient. 
+# Since, Function Node Neg knows that there is a parent Tensor x, 
+# so, it passes off the backward gradient dL/dx as a LazyBuffer(-grad_output._np)
+
+class Neg(Function):
+    def forward(self, x):
+        return LazyBuffer(-x._np)
+
+    def backward(self, grad_output):
+        return LazyBuffer(-grad_output._np)
 
 # Step 17 - Relu (not yet solved)
 # TODO: implement
