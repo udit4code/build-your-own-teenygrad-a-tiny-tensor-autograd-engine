@@ -31,7 +31,7 @@ python scaffold.py
 - [x] **19.** Exp
 - [x] **20.** Sqrt
 - [x] **21.** Sigmoid
-- [ ] **22.** Add
+- [x] **22.** Add
 - [ ] **23.** Sub
 - [ ] **24.** Mul
 - [ ] **25.** Div
