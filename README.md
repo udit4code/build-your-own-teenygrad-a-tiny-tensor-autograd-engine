@@ -24,7 +24,7 @@ python scaffold.py
 - [x] **12.** lazybuffer_permute
 - [x] **13.** Function
 - [x] **14.** function_forward_backward_stubs
-- [ ] **15.** apply
+- [x] **15.** apply
 - [ ] **16.** Neg
 - [ ] **17.** Relu
 - [ ] **18.** Log
