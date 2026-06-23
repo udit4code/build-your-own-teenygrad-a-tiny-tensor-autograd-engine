@@ -443,6 +443,53 @@ class Neg(Function):
         return LazyBuffer(-grad_output._np)
 
 # Step 17 - Relu
+# Say, we have: Tensor x -> Function Node Relu -> Tensor y
+
+# During the forward pass, the Relu Function consumes the underlying
+# LazyBuffer of Tensor x and produces a new LazyBuffer: out_buf = max(x, 0)
+# This output buffer is then wrapped in Tensor y.
+# Mathematically: y = f(x) = max(x, 0)
+# Example:
+#     x = [-2, -0.5, 0, 1, 3]
+#     y = [ 0,    0, 0, 1, 3]
+# Notice that all negative values are clipped to zero,
+# while positive values pass through unchanged.
+
+
+# Why do we store self.ret ?
+
+# During backward propagation, Relu needs to know which
+# elements were active (positive) during the forward pass.
+# We could store the original input x, but we do not need it.
+# The output already contains enough information:   self.ret > 0   <=>   original input was positive
+
+# Therefore we cache: self.ret = relu(x) and reuse it during backward.
+
+# Local derivative of ReLU : ReLU is piecewise:
+# relu(x) = 0   if x <= 0 else x   
+# Therefore: d(relu)/dx = 0   if x <= 0 else 1 
+# Intuition:
+# * Negative inputs are "blocked" by ReLU. Their gradients should also be blocked.
+# * Positive inputs pass through unchanged. Their gradients should flow unchanged.
+#
+# Backward pass : During backpropagation:
+# Tensor x <- Function Node Relu <- Tensor y
+# The upstream gradient dL/dy arrives as grad_output.
+# By the chain rule: dL/dx = dL/dy * d(relu)/dx
+# The derivative d(relu)/dx is exactly a binary mask: mask = (self.ret > 0)
+# Example:
+#     self.ret     = [0, 0, 0, 1, 3]
+#     mask         = [0, 0, 0, 1, 1]
+# Suppose:
+#     grad_output = [1, 1, 1, 1, 1]
+# Then:
+#     grad_input = mask * grad_output
+#                = [0, 0, 0, 1, 1]
+# Thus gradients only flow through the neurons that were active during the forward pass.
+
+# The returned LazyBuffer numerically represents dL/dx, which the autograd engine will later accumulate into
+# the parent Tensor's .grad field.
+
 class Relu(Function):
     def forward(self, x):
         self.ret = e(x, UnaryOps.RELU)
