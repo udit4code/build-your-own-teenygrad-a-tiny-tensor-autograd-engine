@@ -102,6 +102,8 @@ def rand(shape, seed=None):
     rng = np.random.RandomState(seed)
     return LazyBuffer(rng.random(shape).astype(np.float32))
 
+LazyBuffer.rand = staticmethod(rand)
+
 # Step 7 - lazybuffer_unary_e
 # Please Note that unary functions in numpy like np.maximum(...), np.exp(...), np.log(...), np.sqrt(...)
 # are elementwise compute operations, not movement operations. 
@@ -1228,8 +1230,89 @@ class Max(Function):
 
         return self.ret
 
-# Step 29 - max_function_backward (not yet solved)
-# TODO: implement
+# Step 29 - max_function_backward
+# Recall the forward pass: y = max(x, axis)
+# Unlike Sum, only the elements that achieve the maximum value contribute to the output.
+# 
+# The backward for max_function is unique, because it introduces the key idea of Winner-take-all gradient-routing
+# Example: x = [2, 7, 3], y = 7
+# If dL/dy = 10, then dL/dx = [0, 10, 0]
+# Only the winning element receives gradient.
+
+# Step 1 : Building the winner mask
+# Forward cached: self.ret = max(x)
+# We expand it back to the input shape and compare: x < self.ret
+# Elements strictly smaller than the maximum become 1.
+# Taking 1 - (x < self.ret) produces 1 at winner locations, 0 elsewhere
+# Example:
+#     x = [2, 7, 3]
+#     mask = [0, 1, 0]
+
+# Step 2 : Tie handling
+# Example:
+#     x = [7, 7, 3]
+# Both first and second positions are maxima.
+# Mask: [1, 1, 0]
+# Count winners:  [2]
+# Expand: [2, 2, 2]
+# Divide Mask by Expand : [0.5, 0.5, 0]
+# This ensures the total gradient remains conserved.
+
+
+# Applying the upstream gradient :
+# The incoming gradient is expanded to the original input shape and multiplied by the normalized mask.
+# Example:
+#     grad_output = 10
+#     normalized_mask = [0.5, 0.5, 0]
+# Result: [5, 5, 0]
+# The gradient is shared equally among all winners.
+
+# Key idea : 
+# Sum.backward: everybody receives gradient.
+# Max.backward: only winners receive gradient.
+# Max.backward with ties: winners split gradient evenly.
+# This preserves the total incoming gradient while correctly implementing the subgradient of max().
+
+def backward(self, grad_output):
+    x_shape = self.x._np.shape
+    # Expand reduced max result
+    max_expanded = self.ret.expand(x_shape)
+    # 1 - (x < max)
+    ones = LazyBuffer(np.ones(x_shape))
+    less_than = lazybuffer_binary_e(
+        self.x,
+        BinaryOps.CMPLT,
+        max_expanded
+    )
+    max_mask = lazybuffer_binary_e(
+        ones,
+        BinaryOps.SUB,
+        less_than
+    )
+    # Count ties
+    counts = max_mask.r(
+        ReduceOps.SUM,
+        self.axis
+    )
+    counts = counts.expand(x_shape)
+    # Split ties evenly
+    normalized_mask = lazybuffer_binary_e(
+        max_mask,
+        BinaryOps.DIV,
+        counts
+    )
+    # Expand incoming gradient
+    grad_expanded = grad_output.expand(
+        x_shape
+    )
+    return lazybuffer_binary_e(
+        normalized_mask,
+        BinaryOps.MUL,
+        grad_expanded
+    )
+
+
+Max.backward = backward
 
 # Step 30 - Reshape (not yet solved)
 # TODO: implement
