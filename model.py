@@ -7,9 +7,9 @@ Assembled from your step-by-step solutions.
 import numpy as np
 
 # Step 1 - prod
-import numpy as np 
+import numpy as np
+ 
 def prod(shape):
-    # TODO: Multiply together the elements of a shape tuple to get the total number of elements.
     return int(np.prod(shape))
 
 # Step 2 - argsort
