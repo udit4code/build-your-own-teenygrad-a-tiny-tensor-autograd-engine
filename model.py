@@ -16,7 +16,6 @@ def prod(shape):
 import numpy as np 
 
 def argsort(values):
-    # TODO: Return the indices that would sort values in ascending order.
     indices = [x for x in range(len(values))]
     result = sorted(indices, key=lambda i: values[i])
     return result
