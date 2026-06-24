@@ -977,6 +977,60 @@ class Mul(Function):
         return (grad_x, grad_y)
 
 # Step 25 - Div
+# Say, we have:
+#     x ----\
+#            Div ----> z
+#     y ----/
+#
+# During the forward pass: z = x / y
+# The Div Function performs elementwise division of the two input LazyBuffers.
+# Example:
+#     x = [10, 20]
+#     y = [ 2,  4]
+#     z = [5, 5]
+
+# Why do we save self.x and self.y ?
+# Unlike Add and Sub, the derivative of division depends on both input values.
+# For z = x / y, we have: dz/dx = 1/y and dz/dy = -x/(y²)
+# Therefore backward must know the original values of both x and y.
+# We cache: self.x = x and self.y = y during the forward pass.
+
+
+# Local derivatives of Div
+# For: z = x / y,
+# the local derivatives are:
+#     dz/dx =  1/y
+#     dz/dy = -x/(y²)
+
+# Notice that the denominator influences both gradients.
+# Backward pass
+# During backpropagation:
+#     x ----\
+#            Div <---- z
+#     y ----/
+# The upstream gradient dL/dz arrives as grad_output.
+
+# By the chain rule:
+#     dL/dx = dL/dz * dz/dx = grad_output / y
+#     dL/dy = dL/dz * dz/dy = -grad_output * x / (y²)
+#
+# Therefore:
+#     grad_x =  grad_output / self.y
+#     grad_y = -grad_output * self.x / (self.y * self.y)
+
+# Example:
+#     x = [10]
+#     y = [ 2]
+#     grad_output = [1]
+#     grad_x = [ 0.5 ]
+#     grad_y = [-2.5]
+#
+# requires_grad handling: self.needs_input_grad stores one boolean per input: [needs_grad_x, needs_grad_y]
+# Example: [False, True] returns: (None, grad_y)
+
+# Returning None prevents unnecessary gradient accumulation and keeps autograd bookkeeping minimal.
+# The returned tuple must preserve input order: (grad_x, grad_y)
+
 class Div(Function):
     def forward(self, x, y):
         _, BinaryOps, _, _ = make_op_enums()
