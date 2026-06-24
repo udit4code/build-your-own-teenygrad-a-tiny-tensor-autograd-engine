@@ -1168,6 +1168,55 @@ Sum.backward = backward
 # After that, Python automatically binds self when the function is accessed through an instance.
 
 # Step 28 - max_function_forward
+# Say, we have: Tensor x -> Function Node Max -> Tensor y
+# During the forward pass, the Max Function reduces
+# one axis of the input tensor by selecting the largest
+# value along that axis.
+#
+# Example: x = [[1, 5, 3], [8, 2, 4]], axis = 1
+# Then: y = [[5],[8]], with shape:(2,1)
+# because keepdims=True preserves the reduced axis.
+#
+# Why do we store self.x ?
+# Unlike Sum, the gradient of Max depends on which input element produced the maximum value.
+# Example: x = [2, 7, 3], max(x) = 7
+#
+# During backward only the winning position should
+# receive gradient.
+#
+# Therefore backward needs access to the original
+# input tensor.
+# We cache: self.x = x
+# Why do we store self.ret ?
+
+# Backward determines winners using: x == max(x)
+# Therefore we cache the reduction result: self.ret
+# so a mask can later be built via comparison.
+#
+# Example: x = [[1, 5, 3],[8, 2, 4]]
+#     self.ret = [[5], [8]]
+# Then: x == self.ret becomes: [[F, T, F], [T, F, F]] after broadcasting.
+
+# Why keepdims=True ?
+# The reduced dimension is retained with size 1.
+# Example: (2,3) -> (2,1)
+# instead of: (2,)
+# This allows self.ret to broadcast cleanly against
+# the original input tensor during backward when
+# building the winner mask.
+
+
+# Backward intuition :
+# Sum distributes gradient to every contributor.
+# Max distributes gradient only to the elements that equal the maximum value.
+# Example:
+#     x = [2, 7, 3]
+#     max(x) = 7
+#     dL/dy = 10
+# Then: dL/dx = [0, 10, 0]
+# The next step implements this winner-selection gradient routing.
+
+
 class Max(Function):
     def forward(self, x, axis):
         # Why cache x on self.x ? 
