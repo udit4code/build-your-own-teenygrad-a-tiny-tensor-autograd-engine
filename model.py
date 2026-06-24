@@ -1155,6 +1155,7 @@ class Sum(Function):
 # Therefore we materialize the broadcasted result into its own memory before wrapping it in a LazyBuffer.
 
 # The returned LazyBuffer numerically represents dL/dx, which the autograd engine will accumulate into the parent Tensor's .grad field.
+# The mental model is : Forward Sum compresses many values into one. Backward Sum duplicates one gradient back into many values. 
 
 def backward(self, grad_output):
     expanded = np.broadcast_to(grad_output._np,self.input_shape)
