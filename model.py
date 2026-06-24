@@ -1682,7 +1682,6 @@ def tensor_randn(shape, seed=None, requires_grad=False):
 # making it more bookkeeping-heavy without providing additional benefit for reverse-mode autodiff.
 
 def build_topological_order(tensor):
-    # TODO: DFS over each node's _ctx.parents, append a node after its parents
     return build_topological_order_via_implicit_dfs(tensor)
 
 def build_topological_order_via_implicit_dfs(root):
