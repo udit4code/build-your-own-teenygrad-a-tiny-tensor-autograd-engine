@@ -794,8 +794,23 @@ class Add(Function):
             grad_output if self.needs_input_grad[1] else None,
         )
 
-# Step 23 - Sub (not yet solved)
-# TODO: implement
+# Step 23 - Sub
+class Sub(Function):
+    def forward(self, x, y):
+        _, BinaryOps, _, _ = make_op_enums()
+        return lazybuffer_binary_e(
+            x,
+            BinaryOps.SUB,
+            y
+        )
+
+    def backward(self, grad_output):
+        UnaryOps, _, _, _ = make_op_enums()
+
+        return (
+            grad_output if self.needs_input_grad[0] else None,
+            e(grad_output, UnaryOps.NEG) if self.needs_input_grad[1] else None,
+        )
 
 # Step 24 - Mul (not yet solved)
 # TODO: implement

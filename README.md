@@ -32,7 +32,7 @@ python scaffold.py
 - [x] **20.** Sqrt
 - [x] **21.** Sigmoid
 - [x] **22.** Add
-- [ ] **23.** Sub
+- [x] **23.** Sub
 - [ ] **24.** Mul
 - [ ] **25.** Div
 - [ ] **26.** sum_function_forward
