@@ -234,6 +234,8 @@ def expand(self, new_shape):
     out = np.array(np.broadcast_to(self._np, shape))
     return LazyBuffer(out)
 
+LazyBuffer.expand = expand
+
 # Step 12 - lazybuffer_permute
 # In NumPy, transpose (and therefore our permute) is a classic view operation. When we do:
 # x = np.arange(24).reshape(2,3,4)
