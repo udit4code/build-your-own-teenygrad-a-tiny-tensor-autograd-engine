@@ -1652,9 +1652,19 @@ def tensor_creation_helpers():
     return zeros_fn, ones_fn, full_fn
 
 # Step 37 - tensor_randn
+# What is Box-Mueller Transform ? Why do we need it ?
+# Our framework already has LazyBuffer.rand(shape, seed) , which generates from UniformDistribution(0, 1). 
+# But the problem is that neural networks typically need NormalDistribution(0, 1) for initialisation of weights,
+# and activations. The Box-Mueller Transform offers a mathematically exact way to convert 2 independent 
+# uniform random variables u1 ~ U(0, 1) and u2 ~ U(0,1) into z ~ N(0, 1) using the formula 
+# z1  = sqrt(-2 ln(u1)) * cos(2πu2) and z2  = sqrt(-2 ln(u1)) * sin(2πu2)
+
 def tensor_randn(shape, seed=None, requires_grad=False):
     # Step 1 : Draw two independent uniform random fields
     rng = np.random.RandomState(seed)
+    # Why do we draw u1 and u2 from the single rng ? 
+    # Because we want to guarantee independence while keeping reproducibility tied to a single RNG stream. 
+    # With a fixed seed, we will always get identical tensors, which is essential for debugging.
     u1, u2 = rng.rand(2, *shape)
     # Step 2 : Avoid log(0)
     u1 = np.clip(u1, 1e-12, 1.0)
