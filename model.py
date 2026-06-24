@@ -1471,6 +1471,57 @@ def expand_function_backward(ctx, grad_output):
     return out
 
 # Step 33 - permute_function_forward_backward
+# Permute is a movement operation.
+# It does not change any tensor values.
+# It only changes the order of dimensions.
+
+# Example:
+#     x.shape = (2,3,4)
+#     order = (2,0,1)
+# Forward:
+#     (2,3,4)
+# becomes:
+#     (4,2,3)
+
+# Why do we store ctx.order ?
+# Backward must undo the exact permutation that forward applied.
+# Therefore we cache: ctx.order
+# and compute its inverse later.
+
+
+# Forward pass :
+# Forward simply reorders axes:
+#     y = permute(x, order)
+# No values change.
+
+# Only indexing changes.
+
+
+# Backward pass :
+# Since permute only rearranges axes, backward simply applies the inverse permutation.
+# Example:
+#     order = (2,0,1)
+# Forward:
+#     (2,3,4)
+#       ↓
+#     (4,2,3)
+# Inverse:
+#     argsort(order) = (1,2,0)
+# Backward:
+#     (4,2,3)
+#       ↓
+#     (2,3,4)
+
+# Key idea :
+# Forward:
+#     permute(P)
+# Backward:
+#     permute(P⁻¹)
+# where:
+#     P⁻¹ = argsort(P)
+
+# Thus permute is reversed by applying the inverse permutation to the incoming gradient.
+
 def permute_function_forward_backward():
     def forward(ctx, x, order):
         ctx.order = order
