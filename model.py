@@ -1322,8 +1322,22 @@ def backward(self, grad_output):
 
 Max.backward = backward
 
-# Step 30 - Reshape (not yet solved)
-# TODO: implement
+# Step 30 - Reshape
+# Key Insight : reshape does not change any values. It only changes how we interpret the same memory. 
+
+class Reshape(Function):
+    def forward(self, x, shape):
+        self.input_shape = x._np.shape
+        return LazyBuffer(
+            x._np.reshape(shape)
+        )
+
+    def backward(self, grad_output):
+        return LazyBuffer(
+            grad_output._np.reshape(
+                self.input_shape
+            )
+        )
 
 # Step 31 - expand_function_forward (not yet solved)
 # TODO: implement
