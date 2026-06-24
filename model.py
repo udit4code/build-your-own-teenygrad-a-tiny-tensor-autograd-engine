@@ -976,8 +976,51 @@ class Mul(Function):
         )
         return (grad_x, grad_y)
 
-# Step 25 - Div (not yet solved)
-# TODO: implement
+# Step 25 - Div
+class Div(Function):
+    def forward(self, x, y):
+        _, BinaryOps, _, _ = make_op_enums()
+        self.x = x
+        self.y = y
+        return lazybuffer_binary_e(x,BinaryOps.DIV,y)
+
+    def backward(self, grad_output):
+        UnaryOps, BinaryOps, _, _ = make_op_enums()
+        grad_x = None
+        grad_y = None
+
+        if self.needs_input_grad[0]:
+            grad_x = lazybuffer_binary_e(
+                grad_output,
+                BinaryOps.DIV,
+                self.y
+            )
+
+        if self.needs_input_grad[1]:
+            y_sq = lazybuffer_binary_e(
+                self.y,
+                BinaryOps.MUL,
+                self.y
+            )
+
+            numerator = lazybuffer_binary_e(
+                grad_output,
+                BinaryOps.MUL,
+                self.x
+            )
+
+            frac = lazybuffer_binary_e(
+                numerator,
+                BinaryOps.DIV,
+                y_sq
+            )
+
+            grad_y = e(
+                frac,
+                UnaryOps.NEG
+            )
+
+        return (grad_x, grad_y)
 
 # Step 26 - sum_function_forward (not yet solved)
 # TODO: implement
