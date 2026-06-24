@@ -1674,8 +1674,87 @@ def tensor_randn(shape, seed=None, requires_grad=False):
     z = z.astype(np.float32)
     return Tensor(LazyBuffer(z),requires_grad=requires_grad)
 
-# Step 38 - build_topological_order (not yet solved)
-# TODO: implement
+# Step 38 - build_topological_order
+# Why does tinygrad use DFS instead of BFS-based Kahn's topological sort, when both ensure same Time Complexity O(V + E)?
+# Because autograd graphs are naturally represented with backward pointers (node -> parents). 
+# DFS can produce a post-order traversal directly from this representation with O(V+E) complexity and minimal auxiliary data structures. 
+# Kahn's algorithm requires constructing explicit child adjacency lists and in-degree counts first, 
+# making it more bookkeeping-heavy without providing additional benefit for reverse-mode autodiff.
+
+def build_topological_order(tensor):
+    # TODO: DFS over each node's _ctx.parents, append a node after its parents
+    return build_topological_order_via_implicit_dfs(tensor)
+
+def build_topological_order_via_implicit_dfs(root):
+    assert root is not None, "root tensor cannot be None"
+    visited = set()
+    order = []
+
+    def dfs(node):
+        assert node is not None, "encountered None node in graph"
+        node_id = id(node)
+        if node_id in visited:
+            return
+        visited.add(node_id)
+        # Step 1 : Handle the base case of a Leaf node
+        if node._ctx is None:
+            order.append(node)
+            return
+        # Step 2 : Since the node is not a Leaf Node, it must be an Internal node. Handle it recursively. 
+        assert hasattr(node._ctx, "parents"), f"{type(node._ctx).__name__} missing parents attribute"
+        parents = node._ctx.parents
+        assert isinstance(parents, (list, tuple)), f"parents must be list/tuple, got {type(parents)}"
+        for parent in parents:
+            assert parent is not None, f"{type(node._ctx).__name__} contains None parent"
+            dfs(parent)
+        order.append(node)
+
+    dfs(root)
+
+    # Sanity checks
+    assert len(order) == len({id(n) for n in order}), "duplicate nodes detected in topological order"
+    assert order[-1] is root, "root must be last in post-order traversal"
+    
+    return order
+
+def build_topological_order_via_explicit_dfs_stack(root):
+    assert root is not None, "root tensor cannot be None"
+    visited = set()
+    order = []
+    # (node, processed)
+    stack = [(root, False)]
+    while stack:
+        node, processed = stack.pop()
+        assert node is not None, "encountered None node"
+        node_id = id(node)
+        if processed:
+            order.append(node)
+            continue
+        if node_id in visited:
+            continue
+        visited.add(node_id)
+        # Schedule this node to be appended AFTER parents
+        stack.append((node, True))
+        if node._ctx is not None:
+            assert hasattr(node._ctx, "parents"), f"{type(node._ctx).__name__} missing parents"
+            parents = node._ctx.parents
+            assert isinstance(parents, (list, tuple)), f"parents must be list/tuple, got {type(parents)}"
+            # reverse so left-to-right DFS order matches recursive version
+            for parent in reversed(parents):
+                assert parent is not None, f"{type(node._ctx).__name__} contains None parent"
+                if id(parent) not in visited:
+                    stack.append((parent, False))
+    # Defensive checks
+    assert len(order) == len({id(x) for x in order}), "duplicate nodes found"
+    assert order[-1] is root, "root must be last in topological order"
+    # Verify parent-before-child invariant
+    position = {id(node): i for i, node in enumerate(order)}
+    for node in order:
+        if node._ctx is not None:
+            for parent in node._ctx.parents:
+                assert position[id(parent)] < position[id(node)], "topological ordering violated"
+
+    return order
 
 # Step 39 - tensor_backward (not yet solved)
 # TODO: implement
