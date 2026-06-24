@@ -1054,8 +1054,22 @@ class Div(Function):
 
         return (grad_x, grad_y)
 
-# Step 26 - sum_function_forward (not yet solved)
-# TODO: implement
+# Step 26 - sum_function_forward
+# For the 1st time, we are implementing a reduction operator, not an elementwise operator. 
+# Earlier, if x.shape was (2, 3), then, relu(x), log(x), exp(x), x + y, x * y would also have the same shape. 
+
+# So, a useful mental model going forward:
+# 1. Elementwise ops keep shape unchanged.
+# 2. Movement ops rearrange shape.
+# 3. Reduction ops shrink shape and therefore, we must remember enough information to expand gradients back during backward.
+
+
+class Sum(Function):
+    def forward(self, x, axis):
+        self.input_shape = x._np.shape
+        self.axis = axis
+        result = x._np.sum(axis=axis,keepdims=True)
+        return LazyBuffer(result)
 
 # Step 27 - sum_function_backward (not yet solved)
 # TODO: implement
