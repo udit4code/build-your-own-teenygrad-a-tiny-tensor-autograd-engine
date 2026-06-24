@@ -1421,6 +1421,44 @@ def expand_function_forward_v1(ctx, x, shape):
     )
 
 # Step 32 - expand_function_backward
+# Recall the forward pass: Expand duplicates values along dimensions whose size is 1.
+# Example: (2,1) becomes (2,3) via broadcasting.
+
+# Gradient intuition :
+# Suppose: x = [[10]] expands to [[10,10,10]]
+# One input value influences three outputs.
+# If backward receives [1,2,3],
+# then all three contributions must accumulate back
+# into the single source element 1 + 2 + 3 = 6
+# Therefore: Expand.backward = Sum, over the broadcast axes.
+
+# Which axes must be summed?
+# We compare:
+#     input_shape
+# with:
+#     grad_output.shape
+#
+# Any axis satisfying input_shape[i] == 1 and grad_shape[i] != 1 was expanded during forward.
+# Example:
+#     input_shape = (2,1,4)
+#     grad_shape  = (2,3,4)
+# Axis 1 was broadcast.
+# Therefore:
+#     axes = (1,)
+
+# Why sum?
+# Every expanded output position contributes gradient to the same original input value.
+# Therefore gradients must be accumulated:
+#     [g1, g2, g3]
+# becomes:
+#     [g1 + g2 + g3]
+
+# Key idea :
+# Forward: Expand duplicates values.
+# Backward: Sum merges gradients.
+# Thus: Expand.backward is mathematically the inverse of Expand.forward in the autograd graph.
+
+
 from types import SimpleNamespace
 
 def expand_function_backward(ctx, grad_output):
