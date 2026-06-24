@@ -1118,6 +1118,44 @@ class Sum(Function):
         return LazyBuffer(result)
 
 # Step 27 - sum_function_backward
+# Recall the forward pass: y = sum(x, axis, keepdims=True)
+# Sum is a reduction operation. Multiple input elements contribute to a single output element.
+# Example:
+#     x = [[1, 2, 3], [4, 5, 6]]
+#     y = [[ 6], [15]]
+
+
+# Gradient intuition :
+# Every element that participates in a sum contributes equally to the output.
+# For y = x1 + x2 + x3
+# we have: dy/dx1 = 1, dy/dx2 = 1, dy/dx3 = 1
+# Therefore:
+#     dL/dx1 = dL/dy * dy/dx1 = dL/dy * 1 = dL/dy
+#     dL/dx2 = dL/dy * dy/dx2 = dL/dy * 1 = dL/dy
+#     dL/dx3 = dL/dy * dy/dx3 = dL/dy * 1 = dL/dy
+# The incoming gradient must be copied back to every element that participated in the reduction.
+
+# Broadcasting the gradient :
+# Suppose forward reduced: (2,3) -> (2,1)
+# and backward receives grad_output = [[10], [20]], with shape: (2,1)
+#
+# The input gradient must have shape (2,3)
+# Therefore: [[10,10,10], [20,20,20]]
+
+# We obtain this by broadcasting the gradient to the original input shape cached during forward: self.input_shape
+
+# Why use np.broadcast_to ?
+# Broadcasting replicates values logically without
+# immediately allocating new memory.
+# Example: (2,1) becomes (2,3) by repeating values along the reduced dimension.
+
+# Why use np.ascontiguousarray ?
+# broadcast_to returns a view with zero-stride axes.
+# Many later operations expect a real contiguous buffer.
+# Therefore we materialize the broadcasted result into its own memory before wrapping it in a LazyBuffer.
+
+# The returned LazyBuffer numerically represents dL/dx, which the autograd engine will accumulate into the parent Tensor's .grad field.
+
 def backward(self, grad_output):
     expanded = np.broadcast_to(grad_output._np,self.input_shape)
     expanded = np.ascontiguousarray(expanded)
