@@ -1162,8 +1162,10 @@ def backward(self, grad_output):
     expanded = np.ascontiguousarray(expanded)
     return LazyBuffer(expanded)
 
+Sum.backward = backward 
 # In Python, a class is a mutable object, so we can attach methods to class after the class definition.
-# We can do
+# We can do Sum.backward = backward . 
+# After that, Python automatically binds self when the function is accessed through an instance.
 
 # Step 28 - max_function_forward (not yet solved)
 # TODO: implement
