@@ -36,7 +36,7 @@ python scaffold.py
 - [x] **24.** Mul
 - [x] **25.** Div
 - [x] **26.** sum_function_forward
-- [ ] **27.** sum_function_backward
+- [x] **27.** sum_function_backward
 - [ ] **28.** max_function_forward
 - [ ] **29.** max_function_backward
 - [ ] **30.** Reshape

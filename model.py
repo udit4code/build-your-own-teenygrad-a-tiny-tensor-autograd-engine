@@ -1117,8 +1117,11 @@ class Sum(Function):
         result = x._np.sum(axis=axis,keepdims=True)
         return LazyBuffer(result)
 
-# Step 27 - sum_function_backward (not yet solved)
-# TODO: implement
+# Step 27 - sum_function_backward
+def backward(self, grad_output):
+    expanded = np.broadcast_to(grad_output._np,self.input_shape)
+    expanded = np.ascontiguousarray(expanded)
+    return LazyBuffer(expanded)
 
 # Step 28 - max_function_forward (not yet solved)
 # TODO: implement
