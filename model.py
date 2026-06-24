@@ -1063,6 +1063,52 @@ class Div(Function):
 # 2. Movement ops rearrange shape.
 # 3. Reduction ops shrink shape and therefore, we must remember enough information to expand gradients back during backward.
 
+# Say, we have: Tensor x -> Function Node Sum -> Tensor y
+# During the forward pass, the Sum Function reduces one axis of the input tensor by adding together all
+# values along that axis.
+# Example:
+#     x = [[1, 2, 3], [4, 5, 6]]
+#     axis = 1
+# Then:
+#     y = [[ 6], [15]]
+# The output rank is preserved because keepdims=True.
+
+# Why do we store self.input_shape ?
+# Sum is a reduction operation.
+
+# Unlike Add, Mul, ReLU, etc., the output shape is smaller than the input shape.
+# Example:
+#     input shape  = (2, 3)
+#     output shape = (2, 1)
+# During backpropagation, gradients arriving from the
+# output must be expanded back to the original shape.
+# Therefore we cache: self.input_shape
+
+# so backward knows what shape to reconstruct.
+# Why do we store self.axis ?
+# The backward pass must know which dimension was reduced during forward.
+
+# Example: sum(axis=0) and sum(axis=1) require different broadcasting patterns.
+# Therefore we cache: self.axis during the forward pass.
+#
+
+# Why keepdims=True ?
+# The reduced dimension is retained with size 1.
+# Example:
+#     sum(axis=1, keepdims=True)
+#     (2,3) -> (2,1)
+# instead of: (2,3) -> (2,)
+#
+# Keeping the dimension simplifies gradient broadcasting during backward.
+# Backward intuition :
+# If y = sum(x, axis),
+# then every element that participated in the sum
+# receives the same upstream gradient.
+#
+# Example: x = [1, 2, 3], y = 6
+# If: dL/dy = 10, then dL/dx = [10, 10, 10]
+# because every input contributed equally to the sum.
+
 
 class Sum(Function):
     def forward(self, x, axis):
