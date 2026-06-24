@@ -882,17 +882,87 @@ class Sub(Function):
         )
 
 # Step 24 - Mul
+# Say, we have:
+#     x ----\
+#            Mul ----> z
+#     y ----/
+# During the forward pass: z = x * y
+#
+# The Mul Function performs elementwise multiplication
+# of the two input LazyBuffers.
+# Example:
+#     x = [2, 3, 4]
+#     y = [5, 6, 7]
+#     z = [10, 18, 28]
+
+# Why do we save self.x and self.y ?
+# Unlike Add and Sub, the derivative of multiplication
+# depends on the values of the inputs.
+# For: z = x * y
+# we have:
+#     dz/dx = y
+#     dz/dy = x
+# Therefore backward must know both original operands.
+# We cache: self.x = x and self.y = y during the forward pass.
+
+# Local derivatives of Mul
+# For: z = x * y
+# the local derivatives are:
+#     dz/dx = y
+#     dz/dy = x
+# Intuition:
+# * If x increases slightly, the output changes in
+#   proportion to y.
+# * If y increases slightly, the output changes in
+#   proportion to x.
+# 
+# Backward pass
+# During backpropagation:
+#     x ----\
+#            Mul <---- z
+#     y ----/
+# The upstream gradient dL/dz arrives as grad_output.
+# By the chain rule:
+#     dL/dx = dL/dz * dz/dx = grad_output * y
+#     dL/dy = dL/dz * dz/dy = grad_output * x
+#
+# Therefore:
+#     grad_x = grad_output * self.y
+#     grad_y = grad_output * self.x
+#
+# Example:
+#     x = [2, 3]
+#     y = [5, 7]
+#     grad_output = [10, 10]
+#     grad_x = [50, 70]
+#
+#     grad_y = [20, 30]
+
+# Notice that the gradient for one input depends on the value of the other input.
+#
+# requires_grad handling :
+# self.needs_input_grad stores one boolean per input: [needs_grad_x, needs_grad_y]
+#
+# Example:
+#     [True, False]
+# means:
+#     x requires gradients
+#     y does not
+# Therefore backward returns:
+#     (grad_x, None)
+# Returning None prevents unnecessary gradient accumulation and reduces autograd bookkeeping.
+# The returned tuple must always preserve input order: (grad_x, grad_y)
+
 class Mul(Function):
     def forward(self, x, y):
         _, BinaryOps, _, _ = make_op_enums()
+        # We cache x and y, because we will need it in backward pass. 
         self.x = x
         self.y = y
-
         return lazybuffer_binary_e(x,BinaryOps.MUL,y)
 
     def backward(self, grad_output):
         _, BinaryOps, _, _ = make_op_enums()
-
         grad_x = (
             lazybuffer_binary_e(self.y,BinaryOps.MUL,grad_output)
             if self.needs_input_grad[0]
@@ -904,7 +974,6 @@ class Mul(Function):
             if self.needs_input_grad[1]
             else None
         )
-
         return (grad_x, grad_y)
 
 # Step 25 - Div (not yet solved)
