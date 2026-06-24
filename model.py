@@ -1376,10 +1376,49 @@ class Reshape(Function):
         )
 
 # Step 31 - expand_function_forward
+# Expand is the opposite of Sum.
+# Sum: (2,3) -> (2,1)
+# Expand: (2,1) -> (2,3) by broadcasting values across dimensions whose size is 1.
+# Example:
+# x = [[10],[20]] with Shape: (2,1)
+# We expand to (2,3), which 
+# gives: [[10,10,10], [20,20,20]]
+
+# Why do we cache ctx.input_shape ?
+# During backward we must collapse the expanded
+# gradient back to the original input shape.
+# Example: forward: (2,1) -> (2,3)
+# Therefore backward must eventually perform: (2,3) -> (2,1)
+# via summation.
+#
+# To know the target shape we store: ctx.input_shape
+# before performing the expansion.
+
+# Why use broadcast_to ?
+# Broadcasting avoids manually copying values.
+# NumPy logically treats: [[10],[20]] as [[10,10,10], [20,20,20]]
+# when expanded to shape (2,3).
+
+# Why use ascontiguousarray ?
+# broadcast_to returns a strided view rather than owning real memory.
+# Later operations often expect a writable, contiguous buffer.
+# Therefore we materialize the broadcasted result
+# before wrapping it in a LazyBuffer.
+
 def expand_function_forward(ctx, x, shape):
+    # Needed later by backward to know which axes must be reduced back down.
     ctx.input_shape = x.shape
     # Since, we have already done LazyBuffer.expand = expand
     return x.expand(shape)
+
+def expand_function_forward_v1(ctx, x, shape):
+    # Assuming that we haven't done LazyBuffer.expand = expand 
+    ctx.input_shape = x.shape
+    new_shape = tuple(int(d) for d in shape)
+    out = np.broadcast_to(x._np,new_shape)
+    return LazyBuffer(
+        np.ascontiguousarray(out)
+    )
 
 # Step 32 - expand_function_backward (not yet solved)
 # TODO: implement
