@@ -1792,6 +1792,8 @@ def tensor_backward(tensor):
                 parent.grad = Tensor(grad_buf)
             # Step 3.5.2 : Additional contribution
             else:
+                # Why ? When multiple downstream nodes contribute to same parent, their gradients sum. 
+                # This situation is evident in the case of diamond graph.
                 accumulated = parent.grad.data._np + grad_buf._np
                 parent.grad = Tensor(LazyBuffer(accumulated.astype(np.float32)))
     return None
