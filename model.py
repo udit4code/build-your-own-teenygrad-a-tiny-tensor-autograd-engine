@@ -254,6 +254,8 @@ def permute(self, order):
     assert np.shares_memory(output, self._np) == True, f"permute({order}) on {self} leads to an output {output}, whose storage is not same as self._np {self._np}"
     return LazyBuffer(output)
 
+LazyBuffer.permute = permute
+
 # Step 13 - Function
 # In our teenygrad engine, the computational graph is typically : 
 # Tensor --> Function --> Tensor --> Function --> Tensor 
