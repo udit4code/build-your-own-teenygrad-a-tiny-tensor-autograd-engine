@@ -43,7 +43,7 @@ python scaffold.py
 - [x] **31.** expand_function_forward
 - [x] **32.** expand_function_backward
 - [x] **33.** permute_function_forward_backward
-- [ ] **34.** Tensor
+- [x] **34.** Tensor
 - [ ] **35.** tensor_from_data
 - [ ] **36.** tensor_creation_helpers
 - [ ] **37.** tensor_randn

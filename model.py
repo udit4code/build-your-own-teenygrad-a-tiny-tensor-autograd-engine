@@ -1536,8 +1536,68 @@ def permute_function_forward_backward():
 
     return (forward, backward)
 
-# Step 34 - Tensor (not yet solved)
-# TODO: implement
+# Step 34 - Tensor
+# What does the decorator @property do ? 
+# @property is a Python decorator that lets a method be accessed like an attribute. 
+# In other words, it allows us to write a function but use it without parentheses. 
+# We can use print(t.shape) instead of print(t.shape()) for t = Tensor(...). 
+# The advantage is that users of the class see a simple attribute (t.shape), while internally we 
+# still have the flexibility of a method. Later, if the logic for computing shape changes, we need not change any user code. 
+# So,@property is described as a way to provide attribute syntax with method behaviour.
+
+# What does the @data.setter decorator do ?
+# It is used to create controlled access to internal state. In our Tensor class, 
+# this lets users write x.data = newbuffer, eventhough data, which looks like a normal field, is actually a method. 
+# Under the hood, python transparently invokes the getter/setter methods. 
+
+
+
+# The Tensor class is intentionally designed as a thin autograd wrapper around LazyBuffer, not as the place where numerical computation happens. 
+# Its primary responsibility is to hold the tensor's data (lazydata), gradient (grad), gradient-tracking flag (requires_grad), and the graph edge (_ctx) that connects it to the operation that produced it. 
+# A key design decision is that Tensor accepts either raw user data or an existing LazyBuffer; this allows user-created tensors and operation outputs to flow through the same abstraction without unnecessary copies. 
+# Properties like shape, dtype, and numpy() simply delegate to the underlying buffer, reinforcing the idea that Tensor owns autograd metadata while LazyBuffer owns storage. 
+# The data property provides a controlled alias to the underlying buffer, enabling optimizers and future in-place updates to swap tensor storage without replacing the entire Tensor object. 
+# In short, Tensor serves as the bridge between the user-facing API and the autograd engine while keeping storage, computation, and differentiation concerns cleanly separated.
+
+class Tensor:
+    def __init__(self, data, requires_grad=False, _ctx=None):
+        # IMPORTANT: If data is already a LazyBuffer, reuse it directly.
+        if isinstance(data, LazyBuffer):
+            self.lazydata = data
+        else:
+            arr = np.asarray(data, dtype=np.float32)
+            self.lazydata = LazyBuffer(arr)
+
+        self.requires_grad = requires_grad
+        # grad will later hold accumulated gradients
+        self.grad = None
+        # _ctx points to the Function node that created this tensor
+        self._ctx = _ctx
+
+    @property
+    def data(self):
+        return self.lazydata
+
+    @data.setter
+    def data(self, value):
+        self.lazydata = value
+
+    @property
+    def shape(self):
+        return self.lazydata.shape
+
+    @property
+    def dtype(self):
+        return self.lazydata.dtype
+
+    def numpy(self):
+        return self.lazydata._np
+
+    def __repr__(self):
+        return (
+            f"Tensor(shape={self.shape}, "
+            f"requires_grad={self.requires_grad})"
+        )
 
 # Step 35 - tensor_from_data (not yet solved)
 # TODO: implement
