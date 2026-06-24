@@ -795,6 +795,75 @@ class Add(Function):
         )
 
 # Step 23 - Sub
+# Say, we have:
+#     x ----\
+#            Sub ----> z
+#     y ----/
+#
+# During the forward pass: z = x - y
+# The Sub Function performs elementwise subtraction of the two input LazyBuffers.
+# Example:
+#     x = [10, 20, 30]
+#     y = [ 1,  2,  3]
+#     z = [ 9, 18, 27]
+#
+# Why do we save nothing?
+# Unlike Log, Exp, ReLU, or Sigmoid, the derivative of
+# subtraction does not depend on either input value.
+# For: z = x - y
+# the local derivatives are constants: dz/dx = 1 and dz/dy = -1
+# Therefore backward never needs to look at x or y again.
+# No cached buffers are required.
+#
+# Local derivatives of Sub
+# For z = x - y, we have: dz/dx =  1 and dz/dy = -1
+# Intuitively:
+# * Increasing x by a small amount increases z by the
+#   same amount.
+# * Increasing y by a small amount decreases z by the
+#   same amount.
+
+# Backward pass :
+# During backpropagation:
+#     x ----\
+#            Sub <---- z
+#     y ----/
+# The upstream gradient dL/dz arrives as grad_output.
+# By the chain rule: dL/dx = dL/dz * dz/dx = grad_output * 1 = grad_output
+# dL/dy = dL/dz * dz/dy = grad_output * (-1) = -grad_output
+# Therefore:
+#     grad_x =  grad_output
+#     grad_y = -grad_output
+# Example:
+#     grad_output = [4, 5]
+#     grad_x = [ 4,  5]
+#     grad_y = [-4, -5]
+#
+# The first parent receives the incoming gradient
+# unchanged, while the second parent receives its
+# negation.
+
+# requires_grad handling :
+# Not every input necessarily participates in gradient
+# computation.
+# self.needs_input_grad stores one boolean per input:
+# [needs_grad_x, needs_grad_y]
+#
+# Example:
+#     [False, True]
+# means:
+#     x does not require gradients
+#     y does require gradients
+# Therefore backward should return:
+#     (None, -grad_output)
+# Returning None tells the autograd engine there is
+# nothing to accumulate for that parent.
+# The returned tuple must always have one slot per
+# forward input and preserve the original input order: (grad_x, grad_y)
+
+class Sub(Function):
+    ...
+
 class Sub(Function):
     def forward(self, x, y):
         _, BinaryOps, _, _ = make_op_enums()
