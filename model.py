@@ -199,6 +199,8 @@ def reshape(self, new_shape):
     assert np.shares_memory(output, self._np), f"reshape on {self} to {new_shape} leads to an output {output} with different backend storage"
     return LazyBuffer(output)
 
+LazyBuffer.reshape = reshape
+
 # Step 11 - lazybuffer_expand
 # expand is the interesting edge case. 
 # Conceptually, it is a movement operation because it does not compute new values—it only changes how existing values are viewed. 
