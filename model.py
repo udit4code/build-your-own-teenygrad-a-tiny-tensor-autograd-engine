@@ -1470,8 +1470,20 @@ def expand_function_backward(ctx, grad_output):
         out = LazyBuffer(out._np.reshape(input_shape))
     return out
 
-# Step 33 - permute_function_forward_backward (not yet solved)
-# TODO: implement
+# Step 33 - permute_function_forward_backward
+def permute_function_forward_backward():
+    def forward(ctx, x, order):
+        ctx.order = order
+        return permute(x, order)
+
+    def backward(ctx, grad_output):
+        inverse_order = tuple(argsort(ctx.order))
+        return permute(
+            grad_output,
+            inverse_order
+        )
+
+    return (forward, backward)
 
 # Step 34 - Tensor (not yet solved)
 # TODO: implement
