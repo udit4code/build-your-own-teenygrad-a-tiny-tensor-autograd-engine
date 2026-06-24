@@ -1427,11 +1427,10 @@ def expand_function_backward(ctx, grad_output):
     input_shape = ctx.input_shape
     grad_shape = grad_output.shape
     axes = tuple(i for i in range(len(input_shape)) if input_shape[i] == 1 and grad_shape[i] != 1)
-
-    out = grad_output.r(
-        SimpleNamespace(name='SUM'),
-        axes
-    )
+    out = grad_output.r(SimpleNamespace(name='SUM'),axes)
+    # Defensive guard: ensure shape matches original input.
+    if out.shape != input_shape:
+        out = LazyBuffer(out._np.reshape(input_shape))
     return out
 
 # Step 33 - permute_function_forward_backward (not yet solved)
