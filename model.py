@@ -1167,8 +1167,17 @@ Sum.backward = backward
 # We can do Sum.backward = backward . 
 # After that, Python automatically binds self when the function is accessed through an instance.
 
-# Step 28 - max_function_forward (not yet solved)
-# TODO: implement
+# Step 28 - max_function_forward
+class Max(Function):
+    def forward(self, x, axis):
+        # Why cache x on self.x ? 
+        # Because, unlike sum, the gradient of Max depends upon the elements which won the max competition. 
+        self.x = x
+        self.axis = axis
+        out = x._np.max(axis=axis,keepdims=True)
+        self.ret = LazyBuffer(out)
+
+        return self.ret
 
 # Step 29 - max_function_backward (not yet solved)
 # TODO: implement
