@@ -1420,8 +1420,19 @@ def expand_function_forward_v1(ctx, x, shape):
         np.ascontiguousarray(out)
     )
 
-# Step 32 - expand_function_backward (not yet solved)
-# TODO: implement
+# Step 32 - expand_function_backward
+from types import SimpleNamespace
+
+def expand_function_backward(ctx, grad_output):
+    input_shape = ctx.input_shape
+    grad_shape = grad_output.shape
+    axes = tuple(i for i in range(len(input_shape)) if input_shape[i] == 1 and grad_shape[i] != 1)
+
+    out = grad_output.r(
+        SimpleNamespace(name='SUM'),
+        axes
+    )
+    return out
 
 # Step 33 - permute_function_forward_backward (not yet solved)
 # TODO: implement
