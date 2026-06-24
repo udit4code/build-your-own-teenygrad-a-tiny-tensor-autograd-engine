@@ -1322,6 +1322,45 @@ Max.backward = backward
 # Step 30 - Reshape
 # Key Insight : reshape does not change any values. It only changes how we interpret the same memory. 
 
+
+# Say, we have: Tensor x -> Function Node Reshape -> Tensor y
+# During the forward pass, Reshape changes only the interpretation of the tensor dimensions.
+# Example:
+# x = [[1, 2, 3],[4, 5, 6]] with shape (2,3)
+# Reshape to (3,2) gives: [[1, 2], [3, 4], [5, 6]]
+# The values are unchanged.
+
+# Why do we cache self.input_shape ?
+# Backward must reconstruct the gradient with the original input shape.
+# Therefore we cache:
+#     self.input_shape
+# Example:
+#     (2,3) -> (3,2)
+# During backward we need to recover (2,3)
+#
+
+# Why do we NOT cache x ?
+# The derivative of reshape does not depend on the values of the input tensor.
+# Only the original shape matters.
+# Therefore storing self.x = x
+# would keep an unnecessary reference to the forward activation and consume extra memory.
+# Storing self.input_shape is sufficient.
+
+# Backward pass : Reshape is a movement operation.
+# It does not create, destroy, add, multiply, or modify any values.
+# Therefore the gradient values remain unchanged.
+# Only their shape changes.
+# Example: grad_output = [[10, 20], [30, 40],[50, 60]] with Shape (3,2)
+# Backward returns: [[10, 20, 30], [40, 50, 60]], with Shape: (2,3)
+
+# Key idea :
+# Forward: reshape(data)
+# Backward: reshape(gradient)
+# Reshape is its own inverse in the autograd graph:
+#     x -> reshape -> y
+#     grad(y) -> reshape back -> grad(x)
+# No gradient values change, only their layout.
+
 class Reshape(Function):
     def forward(self, x, shape):
         self.input_shape = x._np.shape
