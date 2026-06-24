@@ -1793,11 +1793,7 @@ def tensor_backward(tensor):
             # Step 3.5.2 : Additional contribution
             else:
                 accumulated = parent.grad.data._np + grad_buf._np
-                parent.grad = Tensor(
-                    LazyBuffer(
-                        accumulated.astype(np.float32)
-                    )
-                )
+                parent.grad = Tensor(LazyBuffer(accumulated.astype(np.float32)))
     return None
 
 # Step 40 - bind_unary_tensor_methods (not yet solved)
