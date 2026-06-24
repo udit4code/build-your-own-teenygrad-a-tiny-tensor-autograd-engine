@@ -1682,7 +1682,8 @@ def tensor_randn(shape, seed=None, requires_grad=False):
 # making it more bookkeeping-heavy without providing additional benefit for reverse-mode autodiff.
 
 def build_topological_order(tensor):
-    return build_topological_order_via_implicit_dfs(tensor)
+    # return build_topological_order_via_implicit_dfs(tensor)
+    return build_topological_order_via_explicit_dfs_stack(tensor)
 
 def build_topological_order_via_implicit_dfs(root):
     assert root is not None, "root tensor cannot be None"
@@ -1717,6 +1718,7 @@ def build_topological_order_via_implicit_dfs(root):
     return order
 
 def build_topological_order_via_explicit_dfs_stack(root):
+    # NOTE : This is the version w should use in a production autograd engine because very deep computation graphs can otherwise hit Python's recursion limit.
     assert root is not None, "root tensor cannot be None"
     visited = set()
     order = []
