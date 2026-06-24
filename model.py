@@ -1281,7 +1281,7 @@ class Max(Function):
 
 def backward(self, grad_output):
     x_shape = self.x._np.shape
-    # Expand reduced max result
+    # Step 1 : Expand reduced max result
     max_expanded = self.ret.expand(x_shape)
     # 1 - (x < max)
     ones = LazyBuffer(np.ones(x_shape))
@@ -1295,19 +1295,19 @@ def backward(self, grad_output):
         BinaryOps.SUB,
         less_than
     )
-    # Count ties
+    # Step 2 : Count ties
     counts = max_mask.r(
         ReduceOps.SUM,
         self.axis
     )
     counts = counts.expand(x_shape)
-    # Split ties evenly
+    # Step 3 : Split ties evenly
     normalized_mask = lazybuffer_binary_e(
         max_mask,
         BinaryOps.DIV,
         counts
     )
-    # Expand incoming gradient
+    # Step 4 : Expand incoming gradient
     grad_expanded = grad_output.expand(
         x_shape
     )
