@@ -1044,35 +1044,13 @@ class Div(Function):
         grad_y = None
 
         if self.needs_input_grad[0]:
-            grad_x = lazybuffer_binary_e(
-                grad_output,
-                BinaryOps.DIV,
-                self.y
-            )
+            grad_x = lazybuffer_binary_e(grad_output,BinaryOps.DIV,self.y)
 
         if self.needs_input_grad[1]:
-            y_sq = lazybuffer_binary_e(
-                self.y,
-                BinaryOps.MUL,
-                self.y
-            )
-
-            numerator = lazybuffer_binary_e(
-                grad_output,
-                BinaryOps.MUL,
-                self.x
-            )
-
-            frac = lazybuffer_binary_e(
-                numerator,
-                BinaryOps.DIV,
-                y_sq
-            )
-
-            grad_y = e(
-                frac,
-                UnaryOps.NEG
-            )
+            y_sq = lazybuffer_binary_e(self.y,BinaryOps.MUL,self.y)
+            numerator = lazybuffer_binary_e(grad_output,BinaryOps.MUL,self.x)
+            frac = lazybuffer_binary_e(numerator,BinaryOps.DIV,y_sq)
+            grad_y = e(frac,UnaryOps.NEG)
 
         return (grad_x, grad_y)
 
