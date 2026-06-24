@@ -1651,8 +1651,18 @@ def tensor_creation_helpers():
 
     return zeros_fn, ones_fn, full_fn
 
-# Step 37 - tensor_randn (not yet solved)
-# TODO: implement
+# Step 37 - tensor_randn
+def tensor_randn(shape, seed=None, requires_grad=False):
+    # Step 1 : Draw two independent uniform random fields
+    rng = np.random.RandomState(seed)
+    u1, u2 = rng.rand(2, *shape)
+    # Step 2 : Avoid log(0)
+    u1 = np.clip(u1, 1e-12, 1.0)
+    # Step 3 : Box-Muller transform
+    z = np.sqrt(-2.0 * np.log(u1)) * np.cos(2.0 * np.pi * u2)
+    # Step 4 : Framework convention: float32 everywhere
+    z = z.astype(np.float32)
+    return Tensor(LazyBuffer(z),requires_grad=requires_grad)
 
 # Step 38 - build_topological_order (not yet solved)
 # TODO: implement
