@@ -40,7 +40,7 @@ python scaffold.py
 - [x] **28.** max_function_forward
 - [x] **29.** max_function_backward
 - [x] **30.** Reshape
-- [ ] **31.** expand_function_forward
+- [x] **31.** expand_function_forward
 - [ ] **32.** expand_function_backward
 - [ ] **33.** permute_function_forward_backward
 - [ ] **34.** Tensor

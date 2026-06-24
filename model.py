@@ -1375,8 +1375,11 @@ class Reshape(Function):
             )
         )
 
-# Step 31 - expand_function_forward (not yet solved)
-# TODO: implement
+# Step 31 - expand_function_forward
+def expand_function_forward(ctx, x, shape):
+    ctx.input_shape = x.shape
+    # Since, we have already done LazyBuffer.expand = expand
+    return x.expand(shape)
 
 # Step 32 - expand_function_backward (not yet solved)
 # TODO: implement
