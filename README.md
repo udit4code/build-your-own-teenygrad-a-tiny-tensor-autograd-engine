@@ -49,7 +49,7 @@ python scaffold.py
 - [x] **37.** tensor_randn
 - [x] **38.** build_topological_order
 - [x] **39.** tensor_backward
-- [ ] **40.** bind_unary_tensor_methods
+- [x] **40.** bind_unary_tensor_methods
 - [ ] **41.** broadcasted
 - [ ] **42.** bind_binary_tensor_methods
 - [ ] **43.** bind_movement_tensor_methods

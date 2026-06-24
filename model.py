@@ -1798,8 +1798,24 @@ def tensor_backward(tensor):
                 parent.grad = Tensor(LazyBuffer(accumulated.astype(np.float32)))
     return None
 
-# Step 40 - bind_unary_tensor_methods (not yet solved)
-# TODO: implement
+# Step 40 - bind_unary_tensor_methods
+def bind_unary_tensor_methods():
+
+    def _make(fn_cls):
+        def op(t):
+            return fn_cls.apply(t)
+        return op
+
+    methods = {
+        "neg": _make(Neg),
+        "relu": _make(Relu),
+        "log": _make(Log),
+        "exp": _make(Exp),
+        "sqrt": _make(Sqrt),
+        "sigmoid": _make(Sigmoid),
+    }
+
+    return methods
 
 # Step 41 - broadcasted (not yet solved)
 # TODO: implement
