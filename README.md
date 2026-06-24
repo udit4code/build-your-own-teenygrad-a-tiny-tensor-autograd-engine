@@ -44,7 +44,7 @@ python scaffold.py
 - [x] **32.** expand_function_backward
 - [x] **33.** permute_function_forward_backward
 - [x] **34.** Tensor
-- [ ] **35.** tensor_from_data
+- [x] **35.** tensor_from_data
 - [ ] **36.** tensor_creation_helpers
 - [ ] **37.** tensor_randn
 - [ ] **38.** build_topological_order

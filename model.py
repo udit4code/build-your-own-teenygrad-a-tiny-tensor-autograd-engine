@@ -1599,8 +1599,28 @@ class Tensor:
             f"requires_grad={self.requires_grad})"
         )
 
-# Step 35 - tensor_from_data (not yet solved)
-# TODO: implement
+# Step 35 - tensor_from_data
+# The purpose of tensor_from_data is to act as the canonical entry point from Python objects into the autograd world. Users may provide a scalar (5), a list ([1,2,3]), a nested list ([[1,2],[3,4]]), or a NumPy array. 
+# Regardless of the source, the function normalizes everything into a LazyBuffer backed by a float32 ndarray and then wraps that buffer in a Tensor.
+
+
+# The most important design decision is the LazyBuffer pass-through path: isinstance(data, LazyBuffer). 
+# because many framework internals already produce LazyBuffer objects. 
+# Re-wrapping them would create unnecessary objects and potentially copy data. 
+# This preserves the storage identity created by earlier operations while still producing a fresh Tensor wrapper that can participate in autograd.
+
+def tensor_from_data(data, requires_grad=False):
+    # Reuse existing LazyBuffer without copying
+    if isinstance(data, LazyBuffer):
+        buf = data
+    else:
+        arr = np.asarray(data, dtype=np.float32)
+        buf = LazyBuffer(arr)
+
+    return Tensor(
+        buf,
+        requires_grad=requires_grad
+    )
 
 # Step 36 - tensor_creation_helpers (not yet solved)
 # TODO: implement
