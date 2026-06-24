@@ -1162,6 +1162,9 @@ def backward(self, grad_output):
     expanded = np.ascontiguousarray(expanded)
     return LazyBuffer(expanded)
 
+# In Python, a class is a mutable object, so we can attach methods to class after the class definition.
+# We can do
+
 # Step 28 - max_function_forward (not yet solved)
 # TODO: implement
 
