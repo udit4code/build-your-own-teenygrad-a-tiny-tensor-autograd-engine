@@ -163,7 +163,9 @@ def lazybuffer_binary_e(self, op, other):
     assert np.shares_memory(output, other._np) == False, f"out {output} and other._np {other._np} sharing same memory, which is not expected for binary op {op} between {self} and {other}"
     return LazyBuffer(output)
 
-
+# Going forward, whenever we do LazyBuffer.e, it will mean binary_e. 
+# In the previous step, we initially assigned e to unary_e, which will get overwritten. 
+# Now, for unary e, we will use e(x, UnaryOps.LOG/RELU/NEG) explicitly instead of x.e(UnaryOps.LOG)
 LazyBuffer.e = lazybuffer_binary_e
 
 # Step 9 - lazybuffer_r
