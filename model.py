@@ -1759,8 +1759,46 @@ def build_topological_order_via_explicit_dfs_stack(root):
 
     return order
 
-# Step 39 - tensor_backward (not yet solved)
-# TODO: implement
+# Step 39 - tensor_backward
+def tensor_backward(tensor):
+    assert tensor is not None, "tensor cannot be None"
+    # Step 1 : Seed d(output)/d(output) = 1
+    seed = LazyBuffer(np.ones(tensor.shape, dtype=np.float32))
+    tensor.grad = Tensor(seed)
+    # Step 2 : Leaves first, root last
+    order = build_topological_order(tensor)
+    # Step 3 : Root first, leaves last
+    for node in reversed(order):
+        # Step 3.1 : Nothing to backprop through
+        if node._ctx is None:
+            continue
+        # Step 3.2 : Unreachable node
+        if node.grad is None:
+            continue
+        # Step 3.3 : Local backward
+        grads = node._ctx.backward(node.grad.data)
+        # Step 3.4 : Normalize: Unary ops return a single LazyBuffer, but Binary ops return a tuple
+        if not isinstance(grads, (tuple, list)):
+            grads = (grads,)
+        assert len(grads) == len(node._ctx.parents), f"{type(node._ctx).__name__}.backward returned {len(grads)} gradients for {len(node._ctx.parents)} parents"
+        for parent, grad_buf in zip(node._ctx.parents, grads):
+            if grad_buf is None:
+                continue
+            if not parent.requires_grad:
+                continue
+            assert isinstance(grad_buf, LazyBuffer), f"Expected LazyBuffer, got {type(grad_buf)}"
+            # Step 3.5.1 : First contribution
+            if parent.grad is None:
+                parent.grad = Tensor(grad_buf)
+            # Step 3.5.2 : Additional contribution
+            else:
+                accumulated = parent.grad.data._np + grad_buf._np
+                parent.grad = Tensor(
+                    LazyBuffer(
+                        accumulated.astype(np.float32)
+                    )
+                )
+    return None
 
 # Step 40 - bind_unary_tensor_methods (not yet solved)
 # TODO: implement
