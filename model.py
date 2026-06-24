@@ -603,9 +603,6 @@ class Log(Function):
 #
 # Thus the gradient is simply the incoming gradient multiplied elementwise by the forward output.
 # The returned LazyBuffer numerically represents dL/dx, which the autograd engine will later accumulate into the parent Tensor's .grad field.
-#
-class Exp(Function):
-    ...
 
 class Exp(Function):
     def forward(self, x):
