@@ -1622,8 +1622,34 @@ def tensor_from_data(data, requires_grad=False):
         requires_grad=requires_grad
     )
 
-# Step 36 - tensor_creation_helpers (not yet solved)
-# TODO: implement
+# Step 36 - tensor_creation_helpers
+# These factories provide a single canonical path for creating constant tensors throughout the framework. Rather than scattering np.full(...), LazyBuffer(...), and Tensor(...) calls everywhere, 
+# higher-level code can simply call:
+
+# zeros, ones, full = tensor_creation_helpers()
+# x = zeros((2, 3))
+# y = ones((4,))
+# z = full((2, 2), 5.0)
+
+# The other important design decision is that the helpers create the LazyBuffer first and the Tensor second, as 
+# constant_value -> LazyBuffer.const(...) -> Tensor(...), which preserves the framework's separation of concerns. 
+# LazyBuffer is a wrapper over constant_value and Tensor is a wrapper over LazyBuffer. 
+# LazyBuffer owns storage and tensor initialization mechanics, while Tensor remains a lightweight autograd wrapper. 
+# This same pattern is intended to be later be used by random initialization, gradient creation, optimizer updates, and parameter initialization.
+
+
+def tensor_creation_helpers():
+
+    def zeros_fn(shape):
+        return Tensor(LazyBuffer.const(0.0, shape))
+
+    def ones_fn(shape):
+        return Tensor(LazyBuffer.const(1.0, shape))
+
+    def full_fn(shape, value):
+        return Tensor( LazyBuffer.const(value, shape))
+
+    return zeros_fn, ones_fn, full_fn
 
 # Step 37 - tensor_randn (not yet solved)
 # TODO: implement
