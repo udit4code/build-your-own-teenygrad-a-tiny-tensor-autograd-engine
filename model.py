@@ -1996,8 +1996,42 @@ def bind_movement_tensor_methods():
         "permute": permute,
     }
 
-# Step 44 - bind_reduce_tensor_methods (not yet solved)
-# TODO: implement
+# Step 44 - bind_reduce_tensor_methods
+def bind_reduce_tensor_methods():
+
+    def _axes(ndim, axis):
+        if axis is None:
+            return tuple(range(ndim))
+        if isinstance(axis, int):
+            axis = (axis,)
+        return tuple(a % ndim for a in axis)
+
+    def sum(self, axis=None, keepdim=False):
+        axes = _axes(len(self.shape), axis)
+        out = Sum.apply(self,axis=axes)
+        if not keepdim:
+            new_shape = tuple(
+                dim
+                for i, dim in enumerate(out.shape)
+                if i not in axes
+            )
+            out = Reshape.apply(out,shape=new_shape)
+        return out
+
+    def max(self, axis=None, keepdim=False):
+        axes = _axes(len(self.shape), axis)
+        out = Max.apply(self,axis=axes)
+        if not keepdim:
+            new_shape = tuple(
+                dim
+                for i, dim in enumerate(out.shape)
+                if i not in axes
+            )
+            out = Reshape.apply(out,shape=new_shape)
+        return out
+
+    Tensor.sum = sum
+    Tensor.max = max
 
 # Step 45 - tensor_mean (not yet solved)
 # TODO: implement
