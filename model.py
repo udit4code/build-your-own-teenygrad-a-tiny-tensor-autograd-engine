@@ -1845,6 +1845,41 @@ def bind_unary_tensor_methods():
     return methods
 
 # Step 41 - broadcasted
+# -----------------------------------------------------------------------------
+# Binary elementwise operators (Add, Mul, Div, etc.) require both operands to
+# have exactly the same shape.
+# Example:
+#   x.shape = (2, 3)
+#   y.shape = (3,)
+# Numerically, NumPy interprets y as:
+#   x = [[1, 2, 3],        y = [10, 20, 30]
+#        [4, 5, 6]]
+#
+#                 │
+#                 ▼  broadcast
+#   y = [[10, 20, 30],
+#        [10, 20, 30]]
+# so now both tensors have shape (2, 3) and Add/Mul/etc. can operate
+# element-by-element.
+# np.broadcast_arrays() does NOT allocate new storage. Instead, it returns a
+# broadcast "view" (often with stride 0) that behaves as if the data were
+# repeated:
+#   Original y memory:
+#       [10, 20, 30]
+#   Broadcast view:
+#       [[10,20,30],
+#        [10,20,30]]
+# Both rows still reference the SAME underlying memory.
+# Those broadcast views are read-only and unsuitable for later writes, so we
+# materialize them into a real float32 ndarray using:
+#   np.array(view, dtype=np.float32)
+# Finally, we wrap that ndarray back into a Tensor using tensor_from_data().
+# NOTE:
+# tensor_from_data() is NOT broadcasting. Broadcasting has already happened via
+# np.broadcast_arrays(). tensor_from_data() merely converts the resulting ndarray
+# back into the framework's Tensor abstraction so downstream operators can
+# continue working with Tensor objects instead of raw NumPy arrays.
+
 def broadcasted(x, y):
     assert isinstance(x, Tensor), f"x : {x} is not a Tensor"
     assert isinstance(y, Tensor), f"y : {y} is not a Tensor"
