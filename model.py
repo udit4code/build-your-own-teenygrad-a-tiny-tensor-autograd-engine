@@ -2084,8 +2084,28 @@ def tensor_mean_via_numpy_helpers(x, axis=None, keepdim=False):
     # Wrap back into a Tensor
     return tensor_from_data(out)
 
-# Step 46 - tensor_transpose (not yet solved)
-# TODO: implement
+# Step 46 - tensor_transpose
+def tensor_transpose(x, ax1=-2, ax2=-1):
+    # Locate the underlying buffer
+    buf = None
+    for name in ("lazydata", "data", "_lazydata", "buffer", "_data"):
+        if hasattr(x, name):
+            buf = getattr(x, name)
+            break
+    if buf is None:
+        raise AttributeError("Could not locate tensor buffer")
+    # Get the underlying ndarray
+    arr = buf._np if hasattr(buf, "_np") else buf
+    # Tensor rank
+    n = len(arr.shape)
+    # Normalize negative axes
+    a1 = ax1 % n
+    a2 = ax2 % n
+    # Build permutation
+    order = list(range(n))
+    order[a1], order[a2] = order[a2], order[a1]
+    # Use autograd-aware movement op
+    return x.permute(order)
 
 # Step 47 - tensor_matmul_2d (not yet solved)
 # TODO: implement

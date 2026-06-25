@@ -55,7 +55,7 @@ python scaffold.py
 - [x] **43.** bind_movement_tensor_methods
 - [x] **44.** bind_reduce_tensor_methods
 - [x] **45.** tensor_mean
-- [ ] **46.** tensor_transpose
+- [x] **46.** tensor_transpose
 - [ ] **47.** tensor_matmul_2d
 - [ ] **48.** tensor_softmax
 - [ ] **49.** tensor_log_softmax
