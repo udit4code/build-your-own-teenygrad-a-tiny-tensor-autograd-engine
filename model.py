@@ -2111,8 +2111,38 @@ def tensor_transpose(x, ax1=-2, ax2=-1):
     # Step 6 : Use autograd-aware movement op
     return x.permute(order)
 
-# Step 47 - tensor_matmul_2d (not yet solved)
-# TODO: implement
+# Step 47 - tensor_matmul_2d
+def tensor_matmul_2d(a, b):
+    # Get the underlying buffers
+    a_buf = None
+    b_buf = None
+    for name in ("lazydata", "data", "_lazydata", "buffer", "_data"):
+        if hasattr(a, name):
+            a_buf = getattr(a, name)
+            break
+    for name in ("lazydata", "data", "_lazydata", "buffer", "_data"):
+        if hasattr(b, name):
+            b_buf = getattr(b, name)
+            break
+    if a_buf is None or b_buf is None:
+        raise AttributeError("Could not locate tensor buffers")
+    # Extract NumPy arrays
+    an = a_buf._np if hasattr(a_buf, "_np") else a_buf
+    bn = b_buf._np if hasattr(b_buf, "_np") else b_buf
+    # Matrix dimensions
+    m, k = an.shape
+    k2, n = bn.shape
+    assert k == k2, f"Incompatible shapes: {an.shape} and {bn.shape}"
+    # (m,k) -> (m,k,1)
+    a3 = an.reshape((m, k, 1))
+    # (k,n) -> (1,k,n)
+    b3 = bn.reshape((1, k, n))
+    # Broadcasted multiply -> (m,k,n)
+    prod = a3 * b3
+    # Sum over the shared dimension
+    result = prod.sum(axis=1)
+    # Wrap back into a Tensor
+    return type(a)(result)
 
 # Step 48 - tensor_softmax (not yet solved)
 # TODO: implement
