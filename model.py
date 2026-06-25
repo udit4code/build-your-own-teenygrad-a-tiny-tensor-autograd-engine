@@ -1880,15 +1880,19 @@ def bind_unary_tensor_methods():
 # back into the framework's Tensor abstraction so downstream operators can
 # continue working with Tensor objects instead of raw NumPy arrays.
 
+# In a production autograd framework like PyTorch, 
+# we would not leave the framework at all. Broadcasting would be implemented 
+# using tensor operations like expand, which preserve the computation graph.
 def broadcasted(x, y):
     assert isinstance(x, Tensor), f"x : {x} is not a Tensor"
     assert isinstance(y, Tensor), f"y : {y} is not a Tensor"
 
     ax = x.data._np
     ay = y.data._np
-
+    # Type of bx, by is numpy.ndarray , but our framework expects every operation to consume a Tensor and output a Tensor. 
     bx, by = np.broadcast_arrays(ax, ay)
-
+    # So, we must re-enter the framework by doing: 
+    # Tensor -> LazyBuffer -> Numpy Broadcasting (outside of our framework) -> ndarray -> tensor_from_data() -> Tensor (back inside our framework)
     if bx.shape != x.shape:
         x = tensor_from_data(
             np.array(bx, dtype=np.float32),
