@@ -2166,8 +2166,17 @@ def tensor_matmul_2d_via_numpy_helpers(a, b):
     # Wrap back into a Tensor
     return type(a)(result)
 
-# Step 48 - tensor_softmax (not yet solved)
-# TODO: implement
+# Step 48 - tensor_softmax
+def tensor_softmax(x, axis=-1):
+    # Step 1: subtract the maximum for numerical stability
+    max_vals = Max.apply(x, axis=axis)
+    shifted = Sub.apply(x, max_vals)
+    # Step 2: exponentiate
+    exp_vals = Exp.apply(shifted)
+    # Step 3: compute denominator
+    denom = Sum.apply(exp_vals, axis=axis)
+    # Step 4: normalize
+    return Div.apply(exp_vals, denom)
 
 # Step 49 - tensor_log_softmax (not yet solved)
 # TODO: implement
