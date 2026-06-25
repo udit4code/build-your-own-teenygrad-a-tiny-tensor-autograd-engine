@@ -2219,8 +2219,44 @@ def tensor_log_softmax(x, axis=-1):
     # result to preserve float64 precision for comparison.
     return ArrayWrapper(out.numpy())
 
-# Step 50 - sparse_categorical_cross_entropy (not yet solved)
-# TODO: implement
+# Step 50 - sparse_categorical_cross_entropy
+def sparse_categorical_cross_entropy(logits, labels):
+    # Step 1: DeepML may pass Python lists instead of Tensors.
+    # Convert logits into our Tensor representation if needed.
+    if not isinstance(logits, Tensor):
+        logits = tensor_from_data(logits)
+    # Step 2: Compute numerically stable log-probabilities using
+    # our Tensor primitives (Max, Sub, Exp, Sum, Log).
+    log_probs = tensor_log_softmax(logits, axis=-1)
+    # Step 3: Extract the underlying NumPy array.
+    lp = np.asarray(log_probs.numpy(), dtype=np.float64)
+    # Step 4: Convert labels to a flat integer array.
+    labels = np.asarray(labels, dtype=np.int32).reshape(-1)
+    # Step 5: Gather the log-probability of the correct class for
+    # every sample using NumPy's advanced indexing.
+    correct_log_probs = lp[np.arange(labels.size), labels]
+    # Step 6: Compute the mean negative log-likelihood.
+    loss = -correct_log_probs.mean()
+    # Step 7: Return the scalar loss wrapped as a Tensor.
+    return tensor_from_data(loss)
+
+
+def sparse_categorical_cross_entropy_with_numpy_helpers(logits, labels):
+    # Convert raw inputs to the framework Tensor if needed.
+    if not isinstance(logits, Tensor):
+        logits = tensor_from_data(logits)
+    # Compute numerically stable log-probabilities.
+    log_probs = tensor_log_softmax(logits, axis=-1)
+    # Extract NumPy array.
+    lp = np.asarray(log_probs.numpy(), dtype=np.float64)
+    # Labels as 1-D integer array.
+    labels = np.asarray(labels, dtype=np.int64).reshape(-1)
+    # Gather correct class log-probabilities.
+    correct_log_probs = lp[np.arange(len(labels)), labels]
+    # Mean negative log-likelihood.
+    loss = -correct_log_probs.mean()
+    # Return scalar Tensor.
+    return tensor_from_data(float(loss))
 
 # Step 51 - Linear (not yet solved)
 # TODO: implement
