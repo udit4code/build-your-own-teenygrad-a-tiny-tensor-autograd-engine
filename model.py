@@ -2086,7 +2086,7 @@ def tensor_mean_via_numpy_helpers(x, axis=None, keepdim=False):
 
 # Step 46 - tensor_transpose
 def tensor_transpose(x, ax1=-2, ax2=-1):
-    # Locate the underlying buffer
+    # Step 1 : Locate the underlying buffer
     buf = None
     for name in ("lazydata", "data", "_lazydata", "buffer", "_data"):
         if hasattr(x, name):
@@ -2094,17 +2094,17 @@ def tensor_transpose(x, ax1=-2, ax2=-1):
             break
     if buf is None:
         raise AttributeError("Could not locate tensor buffer")
-    # Get the underlying ndarray
+    # Step 2 : Get the underlying ndarray
     arr = buf._np if hasattr(buf, "_np") else buf
-    # Tensor rank
+    # Step 3 : Tensor rank
     n = len(arr.shape)
-    # Normalize negative axes
+    # Step 4 : Normalize negative axes
     a1 = ax1 % n
     a2 = ax2 % n
-    # Build permutation
+    # Step 5 : Build permutation
     order = list(range(n))
     order[a1], order[a2] = order[a2], order[a1]
-    # Use autograd-aware movement op
+    # Step 6 : Use autograd-aware movement op
     return x.permute(order)
 
 # Step 47 - tensor_matmul_2d (not yet solved)
