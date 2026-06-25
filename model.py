@@ -1799,8 +1799,35 @@ def tensor_backward(tensor):
     return None
 
 # Step 40 - bind_unary_tensor_methods
-def bind_unary_tensor_methods():
+# What are we doing here ? 
+# We are trying to build a dictionary methods, like {"neg" : <function>, "relu" : <function>, ...} 
+# so that methods["neg"](x) behaves like Neg.apply(x). So, the goal is to create six tiny wrapper functions. 
 
+# Let us excuse _make(fn_cls) for a moment. 
+# If we had written something like : 
+# def neg(t):
+#     return Neg.apply(t)
+
+# def relu(t):
+#     return Relu.apply(t)
+
+# and then, used the below dict : 
+# methods = {"neg" : neg, "relu" : relu}
+# Then, this would still work perfectly. What we are doing now is that instead of manually attaching apply for each function, we are generating these functions automatically. 
+
+# Doubt : we defined function op(t) inside _make(..) and we returned it as op, not op(). 
+
+# _make is a function factory: it doesn't perform any tensor operation itself, 
+# it creates another function (op) and returns that function object. 
+# The important distinction is between return op and return op(). 
+# return op means "here is the function—save it and call it later," 
+# whereas return op() would mean "execute the function immediately." 
+# So when _make(Relu) runs, it creates a function equivalent to def op(t): return Relu.apply(t) and returns it. 
+# That returned function is stored in the dictionary under "relu". 
+# Much later, when someone calls methods["relu"](x), that is when op(t) executes with t = x, 
+# which in turn calls Relu.apply(x) and records the autograd graph.
+
+def bind_unary_tensor_methods():
     def _make(fn_cls):
         def op(t):
             return fn_cls.apply(t)
