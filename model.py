@@ -1907,8 +1907,25 @@ def broadcasted(x, y):
 
     return x, y
 
-# Step 42 - bind_binary_tensor_methods (not yet solved)
-# TODO: implement
+# Step 42 - bind_binary_tensor_methods
+def bind_binary_tensor_methods():
+
+    def _make(fn_cls):
+        def op(self, other):
+            x, y = broadcasted(self, other)
+            return fn_cls.apply(x, y)
+        return op
+
+    Tensor.add = _make(Add)
+    Tensor.sub = _make(Sub)
+    Tensor.mul = _make(Mul)
+    Tensor.div = _make(Div)
+
+    # Python operator overloads
+    Tensor.__add__ = Tensor.add
+    Tensor.__sub__ = Tensor.sub
+    Tensor.__mul__ = Tensor.mul
+    Tensor.__truediv__ = Tensor.div
 
 # Step 43 - bind_movement_tensor_methods (not yet solved)
 # TODO: implement

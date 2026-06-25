@@ -51,7 +51,7 @@ python scaffold.py
 - [x] **39.** tensor_backward
 - [x] **40.** bind_unary_tensor_methods
 - [x] **41.** broadcasted
-- [ ] **42.** bind_binary_tensor_methods
+- [x] **42.** bind_binary_tensor_methods
 - [ ] **43.** bind_movement_tensor_methods
 - [ ] **44.** bind_reduce_tensor_methods
 - [ ] **45.** tensor_mean
