@@ -1935,8 +1935,23 @@ def bind_binary_tensor_methods():
     Tensor.__truediv__ = Tensor.div
 
 # Step 43 - bind_movement_tensor_methods
+# A basic doubt : Why are we trying to write Expand dynamically ? 
+# In an ideal world, we would usually write class Expand(Function) with forward(...) and backward(...) 
+# But, in our case, we don't have that class. 
+# Instead we have 2 standalone functions : expand_function_forward and expand_function_backward, without being associated with any class. 
+
+# So, we need an Expand class. Why ? Because our framework is built on the assumption : Add.apply(...), Reshape.apply(...)
+# Every operation is a subclass of Function. The .apply() method comes from the Function class. 
+# So, if we want to write Expand.apply(..), we must have a class Expand that inherits from Function. 
+# Hence, we ask Python to create that class for us dynamically at runtime. 
+# We can think of type(...) as a class Factory. 
+
 def bind_movement_tensor_methods():
     # Step 1 : Build Expand dynamically
+    # Conceptually, this is identical to writing class Expand(Function) with 2 methods forward and backward. 
+    # Think of class as just a box. Before forward() and backward() were lying separately on the table. 
+    # But, type(...) simply puts them into a box called "Expand".
+    # After that, the box inherits from Function, so it automatically gets Expand.apply(...) for free. 
     Expand = type(
         "Expand",
         (Function,),
@@ -1948,7 +1963,6 @@ def bind_movement_tensor_methods():
 
     # Step 2 : Build Permute dynamically
     permute_forward, permute_backward = permute_function_forward_backward()
-
     Permute = type(
         "Permute",
         (Function,),
