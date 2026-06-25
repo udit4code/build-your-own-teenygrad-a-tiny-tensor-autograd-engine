@@ -1936,7 +1936,7 @@ def bind_binary_tensor_methods():
 
 # Step 43 - bind_movement_tensor_methods
 def bind_movement_tensor_methods():
-    # Build Expand dynamically
+    # Step 1 : Build Expand dynamically
     Expand = type(
         "Expand",
         (Function,),
@@ -1946,7 +1946,7 @@ def bind_movement_tensor_methods():
         },
     )
 
-    # Build Permute dynamically
+    # Step 2 : Build Permute dynamically
     permute_forward, permute_backward = permute_function_forward_backward()
 
     Permute = type(
