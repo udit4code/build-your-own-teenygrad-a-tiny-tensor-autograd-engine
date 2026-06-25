@@ -2113,6 +2113,18 @@ def tensor_transpose(x, ax1=-2, ax2=-1):
 
 # Step 47 - tensor_matmul_2d
 def tensor_matmul_2d(a, b):
+    m, k = a.shape
+    k2, n = b.shape
+    assert k == k2
+
+    a3 = Reshape.apply(a, shape=(m, k, 1))
+    b3 = Reshape.apply(b, shape=(1, k, n))
+
+    prod = Mul.apply(a3, b3)
+    output = Sum.apply(prod, axis=1)
+    return Reshape.apply(output, shape=(m, n))
+
+def tensor_matmul_2d_via_numpy_helpers(a, b):
     # Get the underlying buffers
     a_buf = None
     b_buf = None
