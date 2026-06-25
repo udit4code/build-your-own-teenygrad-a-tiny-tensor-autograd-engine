@@ -1844,8 +1844,29 @@ def bind_unary_tensor_methods():
 
     return methods
 
-# Step 41 - broadcasted (not yet solved)
-# TODO: implement
+# Step 41 - broadcasted
+def broadcasted(x, y):
+    assert isinstance(x, Tensor), f"x : {x} is not a Tensor"
+    assert isinstance(y, Tensor), f"y : {y} is not a Tensor"
+
+    ax = x.data._np
+    ay = y.data._np
+
+    bx, by = np.broadcast_arrays(ax, ay)
+
+    if bx.shape != x.shape:
+        x = tensor_from_data(
+            np.array(bx, dtype=np.float32),
+            requires_grad=x.requires_grad,
+        )
+
+    if by.shape != y.shape:
+        y = tensor_from_data(
+            np.array(by, dtype=np.float32),
+            requires_grad=y.requires_grad,
+        )
+
+    return x, y
 
 # Step 42 - bind_binary_tensor_methods (not yet solved)
 # TODO: implement
