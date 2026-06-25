@@ -2033,8 +2033,42 @@ def bind_reduce_tensor_methods():
     Tensor.sum = sum
     Tensor.max = max
 
-# Step 45 - tensor_mean (not yet solved)
-# TODO: implement
+# Step 45 - tensor_mean
+def tensor_mean(x, axis=None, keepdim=False):
+    # Extract the underlying NumPy array
+    arr = _to_np(x)
+    # Compute the arithmetic mean
+    out = arr.mean(axis=axis, keepdims=keepdim)
+    # Wrap back into a Tensor
+    return tensor_from_data(out)
+
+# def tensor_mean(x, axis=None, keepdim=False):
+#     # Step 1: Sum over requested axes (Sum keeps reduced dims)
+#     summed = Sum.apply(x, axis)
+#     # Step 2: Determine which axes were reduced
+#     if axis is None:
+#         axes = tuple(range(len(x.shape)))
+#     elif isinstance(axis, int):
+#         axes = (axis,)
+#     else:
+#         axes = tuple(axis)
+#     # Support negative axes
+#     axes = tuple(a if a >= 0 else a + len(x.shape) for a in axes)
+#     # Step 3: Number of elements reduced
+#     count = prod([x.shape[a] for a in axes])
+#     # Step 4: Divide by the count
+#     out = Div.apply(summed, tensor_from_data(float(count)))
+#     # Step 5: Remove singleton dimensions if requested
+#     if not keepdim:
+#         if axis is None:
+#             new_shape = ()
+#         else:
+#             new_shape = tuple(
+#                 dim for i, dim in enumerate(x.shape)
+#                 if i not in axes
+#             )
+#         out = Reshape.apply(out, new_shape)
+#     return out
 
 # Step 46 - tensor_transpose (not yet solved)
 # TODO: implement
