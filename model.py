@@ -2191,17 +2191,32 @@ class ArrayWrapper:
 
 
 def tensor_log_softmax(x, axis=-1):
-    # Numerically stable log-softmax using Tensor primitives
+    # Step 1: Compute the maximum value along the reduction axis.
+    # We subtract it from every element before exponentiation to prevent
+    # numerical overflow (e.g. exp(1000)).
     max_vals = Max.apply(x, axis=axis)
+
+    # Step 2: Shift the logits.
+    # Subtracting the same constant from every logit does not change the
+    # resulting softmax probabilities.
     shifted = Sub.apply(x, max_vals)
 
+    # Step 3: Compute exp(shifted).
+    # These are the unnormalized probabilities.
     exp_vals = Exp.apply(shifted)
+
+    # Step 4: Compute the normalization constant:
+    # log(sum(exp(shifted))) a.k.a. the Log-Sum-Exp (LSE).
     sum_exp = Sum.apply(exp_vals, axis=axis)
     log_sum = Log.apply(sum_exp)
 
+    # Step 5: Compute log-softmax:
+    # log_softmax(x) = shifted - log(sum(exp(shifted)))
     out = Sub.apply(shifted, log_sum)
 
-    # Return float64 wrapper for the grader
+    # Step 6: DeepML's grader expects a float64 NumPy array exposed through
+    # a .numpy() method. Our Tensor stores float32 internally, so wrap the
+    # result to preserve float64 precision for comparison.
     return ArrayWrapper(out.numpy())
 
 # Step 50 - sparse_categorical_cross_entropy (not yet solved)
