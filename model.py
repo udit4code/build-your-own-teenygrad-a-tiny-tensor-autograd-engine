@@ -1908,8 +1908,8 @@ def broadcasted(x, y):
     return x, y
 
 # Step 42 - bind_binary_tensor_methods
-# x + y -> broadcasted(x, y) -> both tensors become shape (2,3) -> Add.apply(x, y) -> Function context created, Forward executed, Graph recorded -> new Tensor returned
-
+# Assume x.shape = (2, 3) and y.shape = (3, )
+# Now, x + y -> broadcasted(x, y) -> both tensors become shape (2,3) -> Add.apply(x, y) -> Function context created, Forward executed, Graph recorded -> new Tensor returned
 def bind_binary_tensor_methods():
     def _make(fn_cls):
         def op(self, other):
