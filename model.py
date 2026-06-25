@@ -2167,6 +2167,9 @@ def tensor_matmul_2d_via_numpy_helpers(a, b):
     return type(a)(result)
 
 # Step 48 - tensor_softmax
+# We can think of Softmax as a 4-stage pipeline. 
+# We compose the softmax out of existing primitive operations. 
+# Logits -> Get Max (Reduce Op) -> Subtract Max for stability (Binary Op) -> Exponentiate (Unary Op) -> Sum (Reduce Op) -> Divide (Binary Op)-> Probabilities
 def tensor_softmax(x, axis=-1):
     # Step 1: subtract the maximum for numerical stability
     max_vals = Max.apply(x, axis=axis)
