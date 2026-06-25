@@ -2034,6 +2034,10 @@ def bind_reduce_tensor_methods():
     Tensor.max = max
 
 # Step 45 - tensor_mean
+# Our Function.apply(cls, *tensors, **kwargs) is designed as : 
+# Function.apply(cls, *tensors, **kwargs). 
+# So, only Tensor objects should be passed positionally. 
+# Parameters like axis and shape should be passed as keyword arguments explicitly, as they are not Tensors. 
 def tensor_mean(x, axis=None, keepdim=False):
     # Step 1: Sum over the requested axes
     summed = Sum.apply(x, axis=axis)
