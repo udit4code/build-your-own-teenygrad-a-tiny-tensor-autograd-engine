@@ -58,7 +58,7 @@ python scaffold.py
 - [x] **46.** tensor_transpose
 - [x] **47.** tensor_matmul_2d
 - [x] **48.** tensor_softmax
-- [ ] **49.** tensor_log_softmax
+- [x] **49.** tensor_log_softmax
 - [ ] **50.** sparse_categorical_cross_entropy
 - [ ] **51.** Linear
 - [ ] **52.** MLP

@@ -2181,8 +2181,17 @@ def tensor_softmax(x, axis=-1):
     # Step 4: normalize
     return Div.apply(exp_vals, denom)
 
-# Step 49 - tensor_log_softmax (not yet solved)
-# TODO: implement
+# Step 49 - tensor_log_softmax
+def tensor_log_softmax(x, axis=-1):
+    # Step 1 : Numerical stabilization via Max 
+    max_vals = Max.apply(x, axis=axis)
+    shifted = Sub.apply(x, max_vals)
+    # Step 2 : log(sum(exp(shifted)))
+    exp_vals = Exp.apply(shifted)
+    sum_exp = Sum.apply(exp_vals, axis=axis)
+    log_sum = Log.apply(sum_exp)
+    # Step 3 : shifted - log(sum(exp(shifted)))
+    return Sub.apply(shifted, log_sum)
 
 # Step 50 - sparse_categorical_cross_entropy (not yet solved)
 # TODO: implement
