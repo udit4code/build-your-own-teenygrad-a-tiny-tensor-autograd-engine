@@ -1935,29 +1935,52 @@ def bind_binary_tensor_methods():
     Tensor.__truediv__ = Tensor.div
 
 # Step 43 - bind_movement_tensor_methods
-# What are we achieving by the below method ? 
-# x + y -> broadcasted(x, y) -> both tensors become shape (2,3) -> Add.apply(x, y) -> {Function context created, Forward executed, Graph recorded} -> new Tensor returned
+def bind_movement_tensor_methods():
+    # Build Expand dynamically
+    Expand = type(
+        "Expand",
+        (Function,),
+        {
+            "forward": expand_function_forward,
+            "backward": expand_function_backward,
+        },
+    )
 
-def bind_binary_tensor_methods():
+    # Build Permute dynamically
+    permute_forward, permute_backward = permute_function_forward_backward()
 
-    def _make(fn_cls):
-        def op(self, other):
-            # The intention is to make the shapes compatible for the binary operation, 
-            # and then, delegate the actual operation to the autograd engine. 
-            x, y = broadcasted(self, other)
-            return fn_cls.apply(x, y)
-        return op
+    Permute = type(
+        "Permute",
+        (Function,),
+        {
+            "forward": permute_forward,
+            "backward": permute_backward,
+        },
+    )
 
-    Tensor.add = _make(Add)
-    Tensor.sub = _make(Sub)
-    Tensor.mul = _make(Mul)
-    Tensor.div = _make(Div)
+    def reshape(self, shape):
+        return Reshape.apply(
+            self,
+            shape=tuple(shape)
+        )
 
-    # Python operator overloads
-    Tensor.__add__ = Tensor.add
-    Tensor.__sub__ = Tensor.sub
-    Tensor.__mul__ = Tensor.mul
-    Tensor.__truediv__ = Tensor.div
+    def expand(self, shape):
+        return Expand.apply(
+            self,
+            shape=tuple(shape)
+        )
+
+    def permute(self, order):
+        return Permute.apply(
+            self,
+            order=tuple(order)
+        )
+
+    return {
+        "reshape": reshape,
+        "expand": expand,
+        "permute": permute,
+    }
 
 # Step 44 - bind_reduce_tensor_methods (not yet solved)
 # TODO: implement
