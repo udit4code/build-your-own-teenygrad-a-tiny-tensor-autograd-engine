@@ -2085,6 +2085,10 @@ def tensor_mean_via_numpy_helpers(x, axis=None, keepdim=False):
     return tensor_from_data(out)
 
 # Step 46 - tensor_transpose
+# We don't touch the underlying NumPy array except to determine the tensor rank.
+# Instead, we construct the permutation corresponding to swapping two axes.
+# Finally, we delegate the actual work to Tensor.permute(), since that's the autograd-aware movement operation.
+
 def tensor_transpose(x, ax1=-2, ax2=-1):
     # Step 1 : Locate the underlying buffer
     buf = None
