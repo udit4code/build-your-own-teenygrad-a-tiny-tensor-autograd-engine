@@ -1909,7 +1909,11 @@ def broadcasted(x, y):
 
 # Step 42 - bind_binary_tensor_methods
 # Assume x.shape = (2, 3) and y.shape = (3, )
-# Now, x + y -> broadcasted(x, y) -> both tensors become shape (2,3) -> Add.apply(x, y) -> Function context created, Forward executed, Graph recorded -> new Tensor returned
+# Now, z = x + y internally leads to execution of Tensor.__add__(x, y), 
+# which, actually is made possible due to the steps x, y = broadcasted(self, other) and Add.apply(x, y)
+
+# Hence, under the hood, the full picture : 
+# x + y -> broadcasted(x, y) -> both tensors become shape (2,3) -> Add.apply(x, y) -> Function context created, Forward executed, Graph recorded -> new Tensor returned
 def bind_binary_tensor_methods():
     def _make(fn_cls):
         def op(self, other):
