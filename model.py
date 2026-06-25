@@ -1908,11 +1908,14 @@ def broadcasted(x, y):
     return x, y
 
 # Step 42 - bind_binary_tensor_methods
-def bind_binary_tensor_methods():
+# x + y -> broadcasted(x, y) -> both tensors become shape (2,3) -> Add.apply(x, y) -> Function context created, Forward executed, Graph recorded -> new Tensor returned
 
+def bind_binary_tensor_methods():
     def _make(fn_cls):
         def op(self, other):
+            # 1. Make the shapes compatible. 
             x, y = broadcasted(self, other)
+            # 2. Delegate the actual computation to the autograd engine. 
             return fn_cls.apply(x, y)
         return op
 
@@ -1927,8 +1930,30 @@ def bind_binary_tensor_methods():
     Tensor.__mul__ = Tensor.mul
     Tensor.__truediv__ = Tensor.div
 
-# Step 43 - bind_movement_tensor_methods (not yet solved)
-# TODO: implement
+# Step 43 - bind_movement_tensor_methods
+# What are we achieving by the below method ? 
+# x + y -> broadcasted(x, y) -> both tensors become shape (2,3) -> Add.apply(x, y) -> {Function context created, Forward executed, Graph recorded} -> new Tensor returned
+
+def bind_binary_tensor_methods():
+
+    def _make(fn_cls):
+        def op(self, other):
+            # The intention is to make the shapes compatible for the binary operation, 
+            # and then, delegate the actual operation to the autograd engine. 
+            x, y = broadcasted(self, other)
+            return fn_cls.apply(x, y)
+        return op
+
+    Tensor.add = _make(Add)
+    Tensor.sub = _make(Sub)
+    Tensor.mul = _make(Mul)
+    Tensor.div = _make(Div)
+
+    # Python operator overloads
+    Tensor.__add__ = Tensor.add
+    Tensor.__sub__ = Tensor.sub
+    Tensor.__mul__ = Tensor.mul
+    Tensor.__truediv__ = Tensor.div
 
 # Step 44 - bind_reduce_tensor_methods (not yet solved)
 # TODO: implement
