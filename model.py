@@ -2318,16 +2318,9 @@ class Linear:
 # Step 52 - MLP
 class MLP:
     """
-    Two-layer Multi-Layer Perceptron (MLP).
-
-    Architecture:
-        Linear(in_features -> hidden)
-                ↓
-              ReLU
-                ↓
-        Linear(hidden -> out_features)
+        Two-layer Multi-Layer Perceptron (MLP).
+        Architecture: Linear(in_features -> hidden) -> ReLU -> Linear(hidden -> out_features)
     """
-
     def __init__(self, in_features, hidden, out_features, seed=None):
         # Step 1: Build the first fully-connected layer.
         self.l1 = Linear(in_features, hidden, seed=seed)
@@ -2345,17 +2338,13 @@ class MLP:
         # DeepML may pass Python lists instead of Tensors.
         if not isinstance(x, Tensor):
             x = tensor_from_data(x)
-
         # Step 1: First affine transformation.
         out = self.l1(x)
-
         # Step 2: Apply the non-linearity.
         # Without ReLU, two Linear layers collapse into a single Linear layer.
         out = out.relu()
-
         # Step 3: Second affine transformation.
         out = self.l2(out)
-
         return out
 
     def parameters(self):
