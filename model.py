@@ -1500,6 +1500,15 @@ def expand_function_backward(ctx, grad_output):
 
 expand.backward = expand_function_backward
 
+Expand = type(
+    "Expand", 
+    (Function,), 
+    {
+        "forward" : expand_function_forward,
+        "backward" : expand_function_backward,
+    },
+)
+
 # Step 33 - permute_function_forward_backward
 # Permute is a movement operation.
 # It does not change any tensor values.
@@ -2602,7 +2611,6 @@ def train_mlp(X, y, epochs=50, learning_rate=0.1, hidden=16, seed=0):
         tensor_backward(loss)
         # Step 4.6 : Update every trainable parameter.
         sgd_step(model.parameters(), learning_rate)
-        raise Exception(f"logits.requires_grad : {logits.requires_grad}, loss.requires_grad : {loss.requires_grad} loss : {loss.grad} model.parameters()[0].grad : {model.parameters()[0].grad}")
     return model, loss_history
 
 # Step 58 - evaluate_mlp (not yet solved)
