@@ -1711,8 +1711,8 @@ def tensor_randn(shape, seed=None, requires_grad=False):
 # making it more bookkeeping-heavy without providing additional benefit for reverse-mode autodiff.
 
 def build_topological_order(tensor):
-    # return build_topological_order_via_implicit_dfs(tensor)
-    return build_topological_order_via_explicit_dfs_stack(tensor)
+    return build_topological_order_via_implicit_dfs(tensor)
+    # return build_topological_order_via_explicit_dfs_stack(tensor)
 
 def build_topological_order_via_implicit_dfs(root):
     # recursive version
