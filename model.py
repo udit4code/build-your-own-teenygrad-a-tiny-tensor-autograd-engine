@@ -1842,7 +1842,10 @@ def bind_unary_tensor_methods():
         "sigmoid": _make(Sigmoid),
     }
 
-    return methods
+    return methods 
+
+
+bind_unary_tensor_methods()
 
 # Step 41 - broadcasted
 # -----------------------------------------------------------------------------
@@ -2309,8 +2312,53 @@ class Linear:
         # Return all trainable parameters so an optimizer can update them.
         return [self.weight, self.bias]
 
-# Step 52 - MLP (not yet solved)
-# TODO: implement
+# Step 52 - MLP
+class MLP:
+    """
+    Two-layer Multi-Layer Perceptron (MLP).
+
+    Architecture:
+        Linear(in_features -> hidden)
+                ↓
+              ReLU
+                ↓
+        Linear(hidden -> out_features)
+    """
+
+    def __init__(self, in_features, hidden, out_features, seed=None):
+        # Step 1: Build the first fully-connected layer.
+        self.l1 = Linear(in_features, hidden, seed=seed)
+
+        # Step 2: Build the second fully-connected layer.
+        # Use a different seed (if provided) so the two layers are not
+        # initialized with identical random weights.
+        self.l2 = Linear(
+            hidden,
+            out_features,
+            seed=None if seed is None else seed + 1
+        )
+
+    def __call__(self, x):
+        # DeepML may pass Python lists instead of Tensors.
+        if not isinstance(x, Tensor):
+            x = tensor_from_data(x)
+
+        # Step 1: First affine transformation.
+        out = self.l1(x)
+
+        # Step 2: Apply the non-linearity.
+        # Without ReLU, two Linear layers collapse into a single Linear layer.
+        out = out.relu()
+
+        # Step 3: Second affine transformation.
+        out = self.l2(out)
+
+        return out
+
+    def parameters(self):
+        # Return the trainable parameters from both layers so an
+        # optimizer can update the entire network.
+        return self.l1.parameters() + self.l2.parameters()
 
 # Step 53 - sgd_step (not yet solved)
 # TODO: implement

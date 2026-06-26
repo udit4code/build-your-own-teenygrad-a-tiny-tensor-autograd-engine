@@ -61,7 +61,7 @@ python scaffold.py
 - [x] **49.** tensor_log_softmax
 - [x] **50.** sparse_categorical_cross_entropy
 - [x] **51.** Linear
-- [ ] **52.** MLP
+- [x] **52.** MLP
 - [ ] **53.** sgd_step
 - [ ] **54.** zero_grad
 - [ ] **55.** make_toy_digit_dataset
