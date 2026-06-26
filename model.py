@@ -2261,16 +2261,11 @@ def sparse_categorical_cross_entropy_with_numpy_helpers(logits, labels):
 # Step 51 - Linear
 class Linear:
     """
-    Fully connected (dense) layer.
-
-    Input:
-        (N, in_features)
-
-    Output:
-        (N, out_features)
-
-    Computes:
-        y = x @ W + b
+        Fully connected (dense) layer.
+        Input: (N, in_features)
+        Output: (N, out_features)
+        Computes:
+            y = x @ W + b
     """
 
     def __init__(self, in_features, out_features, seed=None):
@@ -2280,11 +2275,9 @@ class Linear:
         # Step 2: Initialize weights from a standard normal distribution.
         # Shape: (in_features, out_features)
         W = rng.randn(in_features, out_features).astype(np.float32)
-
         # Step 3: Initialize bias from a standard normal distribution.
         # Shape: (out_features,)
         b = rng.randn(out_features).astype(np.float32)
-
         # Step 4: Wrap as trainable Tensors.
         self.weight = Tensor(W, requires_grad=True)
         self.bias = Tensor(b, requires_grad=True)
@@ -2298,7 +2291,6 @@ class Linear:
         out = tensor_matmul_2d(x, self.weight)
 
         # Step 2: Add bias.
-        #
         # Our current framework does not yet support Tensor + Tensor
         # for this path, so perform the addition with NumPy and wrap
         # the result back as a Tensor.
