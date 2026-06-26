@@ -2267,18 +2267,20 @@ def sparse_categorical_cross_entropy_with_numpy_helpers(logits, labels):
 # Step 51 - Linear
 class Linear:
     """
-        Fully-connected (dense) layer.
-        Input: (N, in_features)
-        Output: (N, out_features)
-        Computes: y = x @ W + b
+        Fully-connected (dense) neural network layer.
+        Computes: y = xW + b
+        Input:
+            x : (batch_size, in_features)
+        Output:
+            y : (batch_size, out_features)
     """
 
     def __init__(self, in_features, out_features, seed=None):
-        # Step 1: Use a deterministic RNG when a seed is supplied.
+        # Step 1: Create a deterministic random number generator if a
+        # seed is provided.
         rng = np.random.RandomState(seed)
 
-        # Step 2: Initialize the weight matrix from a standard normal
-        # distribution.
+        # Step 2: Initialize the weight matrix.
         # Shape: (in_features, out_features)
         w = rng.randn(in_features, out_features).astype(np.float32)
 
@@ -2286,16 +2288,16 @@ class Linear:
         # Shape: (out_features,)
         b = rng.randn(out_features).astype(np.float32)
 
-        # Step 4: Wrap both as trainable Tensors.
+        # Step 4: Wrap both as trainable Tensors so autograd tracks them.
         self.weight = Tensor(w, requires_grad=True)
         self.bias = Tensor(b, requires_grad=True)
 
     def __call__(self, x):
-        # DeepML may pass Python lists instead of Tensors.
+        # DeepML sometimes passes Python lists instead of Tensors.
         if not isinstance(x, Tensor):
             x = tensor_from_data(x)
 
-        # Step 1: Matrix multiplication.
+        # Step 1: Compute the linear transformation x @ W.
         out = tensor_matmul_2d(x, self.weight)
 
         # Step 2: Add the bias.
