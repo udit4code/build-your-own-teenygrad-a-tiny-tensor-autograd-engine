@@ -1998,6 +1998,8 @@ def bind_movement_tensor_methods():
         "permute": permute,
     }
 
+bind_movement_tensor_methods()
+
 # Step 44 - bind_reduce_tensor_methods
 def bind_reduce_tensor_methods():
 
