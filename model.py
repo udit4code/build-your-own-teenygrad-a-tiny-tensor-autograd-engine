@@ -2666,6 +2666,14 @@ def train_mlp(X, y, epochs=50, learning_rate=0.1, hidden=16, seed=0):
         sgd_step(model.parameters(), learning_rate)
     return model, loss_history
 
-# Step 58 - evaluate_mlp (not yet solved)
-# TODO: implement
+# Step 58 - evaluate_mlp
+def evaluate_mlp(model, X_test, y_test):
+    # Step 1: Convert test features into a Tensor.
+    x = tensor_from_data(X_test)
+    # Step 2: Forward pass through the trained model.
+    out = model(x)
+    # Step 3: Extract the underlying NumPy logits.
+    logits = out.lazydata._np
+    # Step 4: Compute and return classification accuracy.
+    return accuracy(logits, y_test)
 
