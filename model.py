@@ -287,6 +287,9 @@ LazyBuffer.permute = permute
 
 class Function:
     def __init__(self, *tensors):
+        # Only Tensor arguments participate in autograd.
+        tensors = [x for x in tensors if isinstance(x, Tensor)]
+        
         # Each element unpacked by tensors is an object of instance Tensor. 
         # We need the param needs_input_grad.
         # Why ? needs_input_grad = [a.requires_grad, b.requires_grad, c.requires_grad] 
@@ -2288,31 +2291,16 @@ def tensor_log_softmax_v2(x, axis=-1):
 
 
 class Gather(Function):
-    """
-        Select one value from each row of a 2D Tensor.
-        Input: x : (N, C) Tensor and labels : array-like of length N
-        Output: (N,) Tensor
-    """
-
     def forward(self, x, labels):
-        # Step 1: Save information needed for backward.
-        self.labels = np.asarray(labels, dtype=np.int32).reshape(-1)
+        self.labels = np.asarray(labels, dtype=np.int32)
         self.input_shape = x._np.shape
 
-        # Step 2: Gather one value per row.
         out = x._np[np.arange(self.labels.size), self.labels]
-
         return LazyBuffer(out.astype(np.float32))
 
     def backward(self, grad):
-        # Step 1: Start with zeros everywhere.
         dx = np.zeros(self.input_shape, dtype=np.float32)
-
-        # Step 2: Scatter the incoming gradient back to the selected
-        # locations.
         dx[np.arange(self.labels.size), self.labels] = grad._np
-
-        # Only x receives gradients.
         return LazyBuffer(dx)
 
 def tensor_gather(x, labels):
