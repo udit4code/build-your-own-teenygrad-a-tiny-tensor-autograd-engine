@@ -897,9 +897,6 @@ class Add(Function):
 # forward input and preserve the original input order: (grad_x, grad_y)
 
 class Sub(Function):
-    ...
-
-class Sub(Function):
     def forward(self, x, y):
         _, BinaryOps, _, _ = make_op_enums()
         return lazybuffer_binary_e(
