@@ -2387,8 +2387,20 @@ def sgd_step(parameters, learning_rate):
     # SGD performs updates via side effects.
     return None
 
-# Step 54 - zero_grad (not yet solved)
-# TODO: implement
+# Step 54 - zero_grad
+def zero_grad(parameters):
+    """
+        Clear the gradients of all trainable parameters.
+        This should be called before every backward pass so gradients from
+        previous iterations are not accumulated.
+    """
+    # Iterate over every trainable parameter.
+    for p in parameters:
+        # Remove the previous gradient. The next backward() call will
+        # create and accumulate a fresh gradient for this parameter.
+        p.grad = None
+    # zero_grad updates parameters in place.
+    return None
 
 # Step 55 - make_toy_digit_dataset (not yet solved)
 # TODO: implement
