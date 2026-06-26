@@ -1445,6 +1445,8 @@ def expand_function_forward_v1(ctx, x, shape):
         np.ascontiguousarray(out)
     )
 
+expand.forward = expand_function_forward
+
 # Step 32 - expand_function_backward
 # Recall the forward pass: Expand duplicates values along dimensions whose size is 1.
 # Example: (2,1) becomes (2,3) via broadcasting.
@@ -2267,6 +2269,7 @@ def tensor_log_softmax_v2(x, axis=-1):
     # Step 2: Shift the logits.
     # Subtracting the same constant from every logit does not change the
     # resulting softmax probabilities.
+    max_vals = Expand.apply(max_vals, shape=x.shape)
     shifted = Sub.apply(x, max_vals)
 
     # Step 3: Compute exp(shifted).
@@ -2277,6 +2280,7 @@ def tensor_log_softmax_v2(x, axis=-1):
     # log(sum(exp(shifted))) a.k.a. the Log-Sum-Exp (LSE).
     sum_exp = Sum.apply(exp_vals, axis=axis)
     log_sum = Log.apply(sum_exp)
+    log_sum = Expand.apply(log_sum, shape=x.shape)
 
     # Step 5: Compute log-softmax:
     # log_softmax(x) = shifted - log(sum(exp(shifted)))
