@@ -2300,8 +2300,7 @@ class Linear:
         return tensor_from_data(out_np + bias_np)
 
     def parameters(self):
-        # Return all trainable parameters so an optimizer can iterate
-        # over them.
+        # Return all trainable parameters so an optimizer can iterate over them.
         return [self.weight, self.bias]
 
 # Step 52 - MLP (not yet solved)
