@@ -2358,9 +2358,9 @@ class Gather(Function):
         return LazyBuffer(out.astype(np.float32))
 
     def backward(self, grad):
-        print("Gather backward")
-        print("incoming grad:", grad._np.shape)
-        print("input shape   :", self.input_shape)
+        # print("Gather backward")
+        # print("incoming grad:", grad._np.shape)
+        # print("input shape   :", self.input_shape)
         dx = np.zeros(self.input_shape, dtype=np.float32)
         dx[np.arange(self.labels.size), self.labels] = grad._np
         return LazyBuffer(dx)
