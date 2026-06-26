@@ -1932,7 +1932,9 @@ def bind_binary_tensor_methods():
     Tensor.__add__ = Tensor.add
     Tensor.__sub__ = Tensor.sub
     Tensor.__mul__ = Tensor.mul
-    Tensor.__truediv__ = Tensor.div
+    Tensor.__truediv__ = Tensor.div 
+
+bind_binary_tensor_methods()
 
 # Step 43 - bind_movement_tensor_methods
 # A basic doubt : Why are we trying to write Expand dynamically ? 
@@ -2261,46 +2263,44 @@ def sparse_categorical_cross_entropy_with_numpy_helpers(logits, labels):
 # Step 51 - Linear
 class Linear:
     """
-        Fully connected (dense) layer.
+        Fully-connected (dense) layer.
         Input: (N, in_features)
         Output: (N, out_features)
-        Computes:
-            y = x @ W + b
+        Computes: y = x @ W + b
     """
 
     def __init__(self, in_features, out_features, seed=None):
         # Step 1: Use a deterministic RNG when a seed is supplied.
         rng = np.random.RandomState(seed)
 
-        # Step 2: Initialize weights from a standard normal distribution.
+        # Step 2: Initialize the weight matrix from a standard normal
+        # distribution.
         # Shape: (in_features, out_features)
-        W = rng.randn(in_features, out_features).astype(np.float32)
-        # Step 3: Initialize bias from a standard normal distribution.
+        w = rng.randn(in_features, out_features).astype(np.float32)
+
+        # Step 3: Initialize the bias vector.
         # Shape: (out_features,)
         b = rng.randn(out_features).astype(np.float32)
-        # Step 4: Wrap as trainable Tensors.
-        self.weight = Tensor(W, requires_grad=True)
+
+        # Step 4: Wrap both as trainable Tensors.
+        self.weight = Tensor(w, requires_grad=True)
         self.bias = Tensor(b, requires_grad=True)
 
     def __call__(self, x):
-        # DeepML may provide x as a Python list.
+        # DeepML may pass Python lists instead of Tensors.
         if not isinstance(x, Tensor):
             x = tensor_from_data(x)
 
         # Step 1: Matrix multiplication.
         out = tensor_matmul_2d(x, self.weight)
 
-        # Step 2: Add bias.
-        # Our current framework does not yet support Tensor + Tensor
-        # for this path, so perform the addition with NumPy and wrap
-        # the result back as a Tensor.
-        out_np = out.numpy()
-        bias_np = self.bias.numpy()
-
-        return tensor_from_data(out_np + bias_np)
+        # Step 2: Add the bias.
+        # Tensor.add() automatically broadcasts the bias from
+        # (out_features,) to (batch_size, out_features).
+        return out + self.bias
 
     def parameters(self):
-        # Return all trainable parameters so an optimizer can iterate over them.
+        # Return all trainable parameters so an optimizer can update them.
         return [self.weight, self.bias]
 
 # Step 52 - MLP (not yet solved)
