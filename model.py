@@ -2352,8 +2352,40 @@ class MLP:
         # optimizer can update the entire network.
         return self.l1.parameters() + self.l2.parameters()
 
-# Step 53 - sgd_step (not yet solved)
-# TODO: implement
+# Step 53 - sgd_step
+def sgd_step(parameters, learning_rate):
+    """
+    Perform one in-place SGD update on all trainable parameters.
+
+    Update rule:
+        θ ← θ - η ∇θ
+    """
+
+    # Helper: return the underlying NumPy array irrespective of whether
+    # the storage is a LazyBuffer or already a NumPy array.
+    def to_numpy(x):
+        if isinstance(x, LazyBuffer):
+            return x._np
+        return np.asarray(x, dtype=np.float32)
+
+    # Update every trainable parameter.
+    for p in parameters:
+        # Some parameters may not have participated in the current
+        # forward/backward pass. Skip those.
+        if p.grad is None:
+            continue
+        # Read the current parameter values.
+        data_np = to_numpy(p.lazydata)
+        # Read the corresponding gradients.
+        grad_np = to_numpy(p.grad.lazydata)
+        # SGD update:
+        # θ ← θ - η ∇θ
+        updated = data_np - learning_rate * grad_np
+        # Replace the parameter's storage with the updated values.
+        p.lazydata = LazyBuffer(updated)
+
+    # SGD performs updates via side effects.
+    return None
 
 # Step 54 - zero_grad (not yet solved)
 # TODO: implement
