@@ -2035,7 +2035,9 @@ def bind_reduce_tensor_methods():
         return out
 
     Tensor.sum = sum
-    Tensor.max = max
+    Tensor.max = max 
+
+bind_reduce_tensor_methods()
 
 # Step 45 - tensor_mean
 # Our Function.apply(cls, *tensors, **kwargs) is designed as : 
