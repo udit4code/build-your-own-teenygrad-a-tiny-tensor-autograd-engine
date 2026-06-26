@@ -66,7 +66,7 @@ python scaffold.py
 - [x] **54.** zero_grad
 - [x] **55.** make_toy_digit_dataset
 - [x] **56.** accuracy
-- [ ] **57.** train_mlp
+- [x] **57.** train_mlp
 - [ ] **58.** evaluate_mlp
 
 ---

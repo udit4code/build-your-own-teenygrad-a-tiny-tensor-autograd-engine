@@ -2232,6 +2232,31 @@ def tensor_log_softmax(x, axis=-1):
     return ArrayWrapper(out.numpy())
 
 # Step 50 - sparse_categorical_cross_entropy
+def tensor_log_softmax_v2(x, axis=-1):
+    # Step 1: Compute the maximum value along the reduction axis.
+    # We subtract it from every element before exponentiation to prevent
+    # numerical overflow (e.g. exp(1000)).
+    max_vals = Max.apply(x, axis=axis)
+
+    # Step 2: Shift the logits.
+    # Subtracting the same constant from every logit does not change the
+    # resulting softmax probabilities.
+    shifted = Sub.apply(x, max_vals)
+
+    # Step 3: Compute exp(shifted).
+    # These are the unnormalized probabilities.
+    exp_vals = Exp.apply(shifted)
+
+    # Step 4: Compute the normalization constant:
+    # log(sum(exp(shifted))) a.k.a. the Log-Sum-Exp (LSE).
+    sum_exp = Sum.apply(exp_vals, axis=axis)
+    log_sum = Log.apply(sum_exp)
+
+    # Step 5: Compute log-softmax:
+    # log_softmax(x) = shifted - log(sum(exp(shifted)))
+    out = Sub.apply(shifted, log_sum)
+    return out 
+
 def sparse_categorical_cross_entropy(logits, labels):
     # Step 1: DeepML may pass Python lists instead of Tensors.
     # Convert logits into our Tensor representation if needed.
@@ -2239,7 +2264,7 @@ def sparse_categorical_cross_entropy(logits, labels):
         logits = tensor_from_data(logits)
     # Step 2: Compute numerically stable log-probabilities using
     # our Tensor primitives (Max, Sub, Exp, Sum, Log).
-    log_probs = tensor_log_softmax(logits, axis=-1)
+    log_probs = tensor_log_softmax_v2(logits, axis=-1)
     # Step 3: Extract the underlying NumPy array.
     lp = np.asarray(log_probs.numpy(), dtype=np.float64)
     # Step 4: Convert labels to a flat integer array.
@@ -2258,7 +2283,7 @@ def sparse_categorical_cross_entropy_with_numpy_helpers(logits, labels):
     if not isinstance(logits, Tensor):
         logits = tensor_from_data(logits)
     # Compute numerically stable log-probabilities.
-    log_probs = tensor_log_softmax(logits, axis=-1)
+    log_probs = tensor_log_softmax_v2(logits, axis=-1)
     # Extract NumPy array.
     lp = np.asarray(log_probs.numpy(), dtype=np.float64)
     # Labels as 1-D integer array.
@@ -2466,8 +2491,49 @@ def accuracy(logits, labels):
     # Step 5: Return the fraction of correct predictions.
     return float(correct.mean())
 
-# Step 57 - train_mlp (not yet solved)
-# TODO: implement
+# Step 57 - train_mlp
+def train_mlp(X, y, epochs=50, learning_rate=0.1, hidden=16, seed=0):
+    """
+        Train a two-layer MLP using full-batch gradient descent.
+
+        Returns:
+            model        : trained MLP
+            loss_history : list of scalar losses, one per epoch
+    """
+    # DeepML may pass Python lists.
+    X = np.asarray(X, dtype=np.float32)
+    y = np.asarray(y, dtype=np.int64)
+
+    # Step 1: Infer the model dimensions from the dataset.
+    in_features = X.shape[1]
+    out_features = int(np.max(y)) + 1
+    # Step 2: Build the MLP.
+    model = MLP(
+        in_features=in_features,
+        hidden=hidden,
+        out_features=out_features,
+        seed=seed,
+    )
+    # Step 3: Convert the input batch into a Tensor once.
+    x = tensor_from_data(X)
+    # Record the loss after every epoch.
+    loss_history = []
+    # Step 4: Full-batch gradient descent.
+    for _ in range(epochs):
+        # Step 4.1 : Clear gradients from the previous iteration.
+        zero_grad(model.parameters())
+        # Step 4.2 : Forward pass.
+        logits = model(x)
+        # Step 4.3 : Compute the classification loss.
+        loss = sparse_categorical_cross_entropy(logits, y)
+        # Step 4.4 : Record the scalar loss.
+        loss_history.append(float(loss.numpy()))
+        # Step 4.5 : Backpropagate through the computation graph.
+        tensor_backward(loss)
+        # Step 4.6 : Update every trainable parameter.
+        sgd_step(model.parameters(), learning_rate)
+        raise Exception(f"logits.requires_grad : {logits.requires_grad}, loss.requires_grad : {loss.requires_grad} loss : {loss.grad} model.parameters()[0].grad : {model.parameters()[0].grad}")
+    return model, loss_history
 
 # Step 58 - evaluate_mlp (not yet solved)
 # TODO: implement
