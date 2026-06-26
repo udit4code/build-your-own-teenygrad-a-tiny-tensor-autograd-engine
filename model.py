@@ -1496,7 +1496,9 @@ def expand_function_backward(ctx, grad_output):
     # Defensive guard: ensure shape matches original input.
     if out.shape != input_shape:
         out = LazyBuffer(out._np.reshape(input_shape))
-    return out
+    return out 
+
+expand.backward = expand_function_backward
 
 # Step 33 - permute_function_forward_backward
 # Permute is a movement operation.
