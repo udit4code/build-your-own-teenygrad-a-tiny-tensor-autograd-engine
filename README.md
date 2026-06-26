@@ -64,7 +64,7 @@ python scaffold.py
 - [x] **52.** MLP
 - [x] **53.** sgd_step
 - [x] **54.** zero_grad
-- [ ] **55.** make_toy_digit_dataset
+- [x] **55.** make_toy_digit_dataset
 - [ ] **56.** accuracy
 - [ ] **57.** train_mlp
 - [ ] **58.** evaluate_mlp

@@ -2402,8 +2402,46 @@ def zero_grad(parameters):
     # zero_grad updates parameters in place.
     return None
 
-# Step 55 - make_toy_digit_dataset (not yet solved)
-# TODO: implement
+# Step 55 - make_toy_digit_dataset
+def make_toy_digit_dataset(num_samples, seed=0):
+    """
+        Generate a synthetic dataset of noisy 3x3 binary digit prototypes.
+        Returns:
+            X : float32 array of shape (num_samples, 9)
+            y : int64 array of shape (num_samples,)
+    """
+    # Step 1: Define the three flattened 3x3 digit prototypes.
+    prototypes = np.array([
+        [0, 1, 0,
+         1, 0, 1,
+         0, 1, 0],   # Class 0
+
+        [1, 1, 1,
+         0, 1, 0,
+         1, 1, 1],   # Class 1
+
+        [1, 0, 1,
+         1, 1, 1,
+         1, 0, 1],   # Class 2
+    ], dtype=np.float32)
+
+    # Step 2: Create a deterministic random number generator.
+    rng = np.random.RandomState(seed)
+
+    # Step 3: Sample class labels uniformly from {0, 1, 2}.
+    # IMPORTANT: This must happen before sampling the noise so the
+    # dataset is reproducible.
+    y = rng.randint(0, 3, size=num_samples)
+
+    # Step 4: Sample Gaussian noise for every pixel.
+    # Shape: (num_samples, 9)
+    noise = 0.1 * rng.randn(num_samples, 9)
+
+    # Step 5: Add noise to the prototype corresponding to each label.
+    X = prototypes[y] + noise
+
+    # Step 6: Return arrays with the expected dtypes.
+    return X.astype(np.float32), y.astype(np.int64)
 
 # Step 56 - accuracy (not yet solved)
 # TODO: implement
