@@ -385,25 +385,54 @@ def function_forward_backward_stubs():
 
 
 
-
 @classmethod
-def apply(cls, *tensors, **kwargs):
-    # Step 1: Build the Function context
-    ctx = cls(*tensors)
+def apply(cls, *args, **kwargs):
+    # Step 1: Split Tensor arguments from metadata arguments.
+    tensor_args = [x for x in args if isinstance(x, Tensor)]
 
-    # Step 2: Run forward on the underlying buffers
-    out_buf = ctx.forward(
-        *[t.lazydata for t in tensors],
-        **kwargs
+    # Step 2: Build the Function context using only Tensor parents.
+    ctx = cls(*tensor_args)
+
+    # Step 3: Forward receives LazyBuffers for Tensors and leaves
+    # metadata (lists, ints, ndarray, etc.) untouched.
+    forward_args = [
+        x.lazydata if isinstance(x, Tensor) else x
+        for x in args
+    ]
+
+    out_buf = ctx.forward(*forward_args, **kwargs)
+
+    # Step 4: Wrap the output.
+    out = Tensor(
+        out_buf,
+        requires_grad=ctx.requires_grad
     )
 
-    # Step 3: Wrap the result in a Tensor
-    out = Tensor(out_buf,requires_grad=ctx.requires_grad)
-
-    # Step 4: Link graph only when gradients are needed
+    # Step 5: Attach the autograd context only if needed.
     if ctx.requires_grad:
         out._ctx = ctx
+
     return out
+
+
+# @classmethod
+# def apply(cls, *tensors, **kwargs):
+#     # Step 1: Build the Function context
+#     ctx = cls(*tensors)
+
+#     # Step 2: Run forward on the underlying buffers
+#     out_buf = ctx.forward(
+#         *[t.lazydata for t in tensors],
+#         **kwargs
+#     )
+
+#     # Step 3: Wrap the result in a Tensor
+#     out = Tensor(out_buf,requires_grad=ctx.requires_grad)
+
+#     # Step 4: Link graph only when gradients are needed
+#     if ctx.requires_grad:
+#         out._ctx = ctx
+#     return out
 
 
 # Provided: attaches apply onto the Function base class. Leave this as-is.
@@ -2257,7 +2286,49 @@ def tensor_log_softmax_v2(x, axis=-1):
     out = Sub.apply(shifted, log_sum)
     return out 
 
+
+class Gather(Function):
+    """
+        Select one value from each row of a 2D Tensor.
+        Input: x : (N, C) Tensor and labels : array-like of length N
+        Output: (N,) Tensor
+    """
+
+    def forward(self, x, labels):
+        # Step 1: Save information needed for backward.
+        self.labels = np.asarray(labels, dtype=np.int32).reshape(-1)
+        self.input_shape = x._np.shape
+
+        # Step 2: Gather one value per row.
+        out = x._np[np.arange(self.labels.size), self.labels]
+
+        return LazyBuffer(out.astype(np.float32))
+
+    def backward(self, grad):
+        # Step 1: Start with zeros everywhere.
+        dx = np.zeros(self.input_shape, dtype=np.float32)
+
+        # Step 2: Scatter the incoming gradient back to the selected
+        # locations.
+        dx[np.arange(self.labels.size), self.labels] = grad._np
+
+        # Only x receives gradients.
+        return LazyBuffer(dx)
+
+def tensor_gather(x, labels):
+    return Gather.apply(x, labels)
+    
 def sparse_categorical_cross_entropy(logits, labels):
+    # Step 1: Stable log-softmax.
+    log_probs = tensor_log_softmax_v2(logits)
+    # Step 2: Gather the log-probability of the correct class.
+    correct = Gather.apply(log_probs, labels)
+    # Step 3: Mean over the batch.
+    loss = Mean.apply(correct)
+    # Step 4: Negate to obtain the negative log-likelihood.
+    return Neg.apply(loss)
+
+def sparse_categorical_cross_entropy_v1(logits, labels):
     # Step 1: DeepML may pass Python lists instead of Tensors.
     # Convert logits into our Tensor representation if needed.
     if not isinstance(logits, Tensor):
