@@ -287,9 +287,6 @@ LazyBuffer.permute = permute
 
 class Function:
     def __init__(self, *tensors):
-        # Only Tensor arguments participate in autograd.
-        tensors = [x for x in tensors if isinstance(x, Tensor)]
-        
         # Each element unpacked by tensors is an object of instance Tensor. 
         # We need the param needs_input_grad.
         # Why ? needs_input_grad = [a.requires_grad, b.requires_grad, c.requires_grad] 
