@@ -2443,8 +2443,28 @@ def make_toy_digit_dataset(num_samples, seed=0):
     # Step 6: Return arrays with the expected dtypes.
     return X.astype(np.float32), y.astype(np.int64)
 
-# Step 56 - accuracy (not yet solved)
-# TODO: implement
+# Step 56 - accuracy
+def accuracy(logits, labels):
+    """
+        Compute the classification accuracy.
+        Args:
+            logits : Tensor or array-like of shape (N, C)
+            labels : array-like of shape (N,)
+        Returns:
+            Python float in [0, 1].
+    """
+    # Step 1: Convert logits to a NumPy array if they are stored in our Tensor abstraction.
+    if isinstance(logits, Tensor):
+        logits = logits.numpy()
+    logits = np.asarray(logits, dtype=np.float32)
+    # Step 2: Convert labels to a flat integer array.
+    labels = np.asarray(labels, dtype=np.int64).reshape(-1)
+    # Step 3: Predict the class with the largest logit for each sample.
+    predictions = np.argmax(logits, axis=1)
+    # Step 4: Compare predictions with the ground-truth labels.
+    correct = predictions == labels
+    # Step 5: Return the fraction of correct predictions.
+    return float(correct.mean())
 
 # Step 57 - train_mlp (not yet solved)
 # TODO: implement
