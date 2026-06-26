@@ -2204,6 +2204,32 @@ def tensor_matmul_2d(a, b):
     # Because, we want broadcasting to yield (m, k, 1) vs (1, k, n) = (m vs 1, k vs k, 1 vs n) = (m, k, n) for matrix multiplication. 
     a3 = Reshape.apply(a, shape=(m, k, 1))
     b3 = Reshape.apply(b, shape=(1, k, n))
+    # Expand both operands to the full (m, k, n) shape BEFORE multiplying.
+    # This keeps the broadcast inside autograd-aware ops, so Mul sees equal
+    # shapes and Expand.backward sums the gradients back to (m, k, 1)
+    # and (1, k, n) respectively.
+    a3 = Expand.apply(a3, shape=(m, k, n))
+    b3 = Expand.apply(b3, shape=(m, k, n))
+    # Step 1 : Pairwise multiplication of every row of A with every column of B
+    prod = Mul.apply(a3, b3)
+    # Step 2 : prod's shape is (m, k, n). 
+    # Now, as k is shared dimension and its axis is 1, so, we sum along axis=1
+    output = Sum.apply(prod, axis=1)
+    # Step 3 : Reshape (m, k, n) back to (m, n)
+    return Reshape.apply(output, shape=(m, n))
+
+
+
+
+
+def tensor_matmul_2d_old(a, b):
+    m, k = a.shape
+    k2, n = b.shape
+    assert k == k2
+    # Why reshape a3 to (m, k, 1) from (m, k) and b3 to (1, k, n) from (k, n) ? 
+    # Because, we want broadcasting to yield (m, k, 1) vs (1, k, n) = (m vs 1, k vs k, 1 vs n) = (m, k, n) for matrix multiplication. 
+    a3 = Reshape.apply(a, shape=(m, k, 1))
+    b3 = Reshape.apply(b, shape=(1, k, n))
     # Step 1 : Pairwise multiplication of every row of A with every column of B
     prod = Mul.apply(a3, b3)
     # Step 2 : prod's shape is (m, k, n). 
