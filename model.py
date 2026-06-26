@@ -1928,7 +1928,7 @@ bind_unary_tensor_methods()
 # In a production autograd framework like PyTorch, 
 # we would not leave the framework at all. Broadcasting would be implemented 
 # using tensor operations like expand, which preserve the computation graph.
-def broadcasted(x, y):
+def broadcasted_old(x, y):
     assert isinstance(x, Tensor), f"x : {x} is not a Tensor"
     assert isinstance(y, Tensor), f"y : {y} is not a Tensor"
 
@@ -1951,6 +1951,33 @@ def broadcasted(x, y):
         )
 
     return x, y
+
+
+def broadcasted(x, y):
+    assert isinstance(x, Tensor), f"x : {x} is not a Tensor"
+    assert isinstance(y, Tensor), f"y : {y} is not a Tensor"
+
+    # IMPORTANT: broadcasting must happen INSIDE the autograd graph. The old
+    # implementation materialized the broadcast with np.broadcast_arrays and
+    # re-wrapped it via tensor_from_data, which produced a brand-new leaf Tensor
+    # with no _ctx. That silently severed the graph, so the gradient to any
+    # broadcast operand (e.g. Linear.bias, the log-sum term in log_softmax) was
+    # dropped. We now broadcast through graph-aware Reshape + Expand instead.
+    out_shape = tuple(int(d) for d in np.broadcast_shapes(x.shape, y.shape))
+
+    def _fit(t):
+        ts = tuple(t.shape)
+        if ts == out_shape:
+            return t
+        # Left-pad the rank with 1s so axes line up before expanding.
+        if len(ts) < len(out_shape):
+            ts = (1,) * (len(out_shape) - len(ts)) + ts
+            t = Reshape.apply(t, shape=ts)
+        if ts != out_shape:
+            t = Expand.apply(t, shape=out_shape)
+        return t
+
+    return _fit(x), _fit(y)
 
 # Step 42 - bind_binary_tensor_methods
 # Assume x.shape = (2, 3) and y.shape = (3, )
