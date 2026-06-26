@@ -2264,29 +2264,28 @@ def tensor_log_softmax(x, axis=-1):
 # Step 50 - sparse_categorical_cross_entropy
 def tensor_log_softmax_v2(x, axis=-1):
     # Step 1: Compute the maximum value along the reduction axis.
-    # We subtract it from every element before exponentiation to prevent
-    # numerical overflow (e.g. exp(1000)).
     max_vals = Max.apply(x, axis=axis)
 
-    # Step 2: Shift the logits.
-    # Subtracting the same constant from every logit does not change the
-    # resulting softmax probabilities.
-    shifted = Sub.apply(x, max_vals)
+    # Step 2: Broadcast max_vals to match x.
+    x1, max_vals = broadcasted(x, max_vals)
 
-    # Step 3: Compute exp(shifted).
-    # These are the unnormalized probabilities.
+    # Step 3: Shift the logits.
+    shifted = Sub.apply(x1, max_vals)
+
+    # Step 4: Compute exp(shifted).
     exp_vals = Exp.apply(shifted)
 
-    # Step 4: Compute the normalization constant:
-    # log(sum(exp(shifted))) a.k.a. the Log-Sum-Exp (LSE).
+    # Step 5: Compute log(sum(exp(shifted))).
     sum_exp = Sum.apply(exp_vals, axis=axis)
     log_sum = Log.apply(sum_exp)
 
-    # Step 5: Compute log-softmax:
-    # log_softmax(x) = shifted - log(sum(exp(shifted)))
-    out = Sub.apply(shifted, log_sum)
-    return out 
+    # Step 6: Broadcast log_sum to match shifted.
+    shifted1, log_sum = broadcasted(shifted, log_sum)
 
+    # Step 7: Final log-softmax.
+    out = Sub.apply(shifted1, log_sum)
+
+    return out
 
 class Gather(Function):
     def forward(self, x, labels):
